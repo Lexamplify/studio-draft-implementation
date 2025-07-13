@@ -1,0 +1,21 @@
+[debug] [2025-07-13T07:16:55.611Z] ----------------------------------------------------------------------
+[debug] [2025-07-13T07:16:55.618Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\Kavikkannan\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js deploy --only hosting
+[debug] [2025-07-13T07:16:55.619Z] CLI Version:   14.9.0
+[debug] [2025-07-13T07:16:55.619Z] Platform:      win32
+[debug] [2025-07-13T07:16:55.619Z] Node Version:  v20.10.0
+[debug] [2025-07-13T07:16:55.619Z] Time:          Sun Jul 13 2025 12:46:55 GMT+0530 (India Standard Time)
+[debug] [2025-07-13T07:16:55.619Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-07-13T07:16:55.776Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-07-13T07:16:55.776Z] > authorizing via signed-in user (kavikkannan.k@gmail.com)
+[debug] [2025-07-13T07:16:55.776Z] [iam] checking project legalease-prod for permissions ["firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2025-07-13T07:16:55.777Z] Checked if tokens are valid: false, expires at: 1752357253264
+[debug] [2025-07-13T07:16:55.778Z] Checked if tokens are valid: false, expires at: 1752357253264
+[debug] [2025-07-13T07:16:55.778Z] > refreshing access token with scopes: []
+[debug] [2025-07-13T07:16:55.779Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-07-13T07:16:55.779Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-07-13T07:16:55.956Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-07-13T07:16:55.956Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-07-13T07:16:55.964Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/legalease-prod:testIamPermissions [none]
+[debug] [2025-07-13T07:16:55.964Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/legalease-prod:testIamPermissions x-goog-quota-user=projects/legalease-prod
+[debug] [2025-07-13T07:16:55.964Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/legalease-prod:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
