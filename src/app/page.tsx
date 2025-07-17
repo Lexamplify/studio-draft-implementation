@@ -17,7 +17,6 @@ export default function Home() {
       <AlternatingFeaturesSection />
       <IconBenefitsSection />
       <DetailedFeaturesSection />
-      <TestimonialsSection />
       <ContactSection />
       <Footer />
       </main>

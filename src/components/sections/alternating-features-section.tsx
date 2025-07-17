@@ -85,7 +85,7 @@ const AlternatingFeaturesSection = () => {
               </p>
               {/* Learn More button removed */}
             </div>
-            <div
+            {/* <div
               className={`relative aspect-[4/3] rounded-lg overflow-hidden shadow-xl animate-fade-in animation-delay-300 ${
                 feature.imageLeft ? "md:col-start-1" : ""
               }`}
@@ -97,7 +97,7 @@ const AlternatingFeaturesSection = () => {
                 objectFit="cover"
                 data-ai-hint={feature.dataAiHint}
               />
-            </div>
+            </div> */}
           </div>
         ))}
       </div>
