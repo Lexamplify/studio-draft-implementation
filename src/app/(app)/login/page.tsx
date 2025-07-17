@@ -80,8 +80,8 @@ export default function LoginPage() {
       // Add redirect URI to match what's configured in Google Cloud Console
       provider.setCustomParameters({
         redirect_uri: typeof window !== 'undefined' ? 
-          `${window.location.origin}/products/login` : 
-          'http://localhost:9002/products/login'
+          `${window.location.origin}/login` : 
+          'http://localhost:9002/login'
       });
       const result = await signInWithPopup(auth, provider);
       // Extract and store Google OAuth access token

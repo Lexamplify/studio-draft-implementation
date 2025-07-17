@@ -165,7 +165,7 @@ export default function CalendarPage() {
           <Gavel className="h-12 w-12 text-blue-700 mb-4" />
           <h2 className="text-2xl font-bold text-blue-800 mb-2">Connect Google Calendar</h2>
           <p className="text-gray-600 mb-6 text-center">To use the legal calendar, please sign in with Google and grant calendar access.</p>
-          <a href="/products/login" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold shadow transition">Connect Google Calendar</a>
+          <a href="/login" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold shadow transition">Connect Google Calendar</a>
         </div>
       </div>
     );

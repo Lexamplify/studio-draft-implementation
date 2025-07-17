@@ -124,7 +124,7 @@ export default function DraftPage() {
           toast({ variant: 'destructive', title: 'Not Logged In', description: 'Please log in to edit documents.' });
           return;
         }
-        const res = await fetch('/products/api/copy-to-drive', {
+        const res = await fetch('/api/copy-to-drive', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -227,7 +227,7 @@ export default function DraftPage() {
     if (tokenLoading || !token) return;
     setDraftsLoading(true);
     try {
-      const res = await fetch('/products/api/my-drafts', {
+      const res = await fetch('/api/my-drafts', {
         headers: { 
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -389,7 +389,7 @@ export default function DraftPage() {
     }
     // For Firebase Storage or other URLs, get a signed URL from the backend
     try {
-      const res = await fetch('/products/api/download-template', {
+      const res = await fetch('/api/download-template', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ storageUrl: docUrl }),
