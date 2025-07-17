@@ -1,0 +1,42 @@
+# Settings to manage and configure a Firebase App Hosting backend.
+# https://firebase.google.com/docs/app-hosting/configure
+
+specVersion: v1alpha1 # Specifies the version of the App Hosting configuration schema
+
+# buildCommand: npm run build # App Hosting typically infers this for Next.js projects.
+# If you have custom build steps, you might need to uncomment and specify it.
+
+runCommand: npm run start # Command to start your Next.js production server.
+
+# Optional: Environment variables that will be set for your application.
+# You can also manage these (especially secrets) in the Firebase console.
+# env:
+#   - variable: NODE_ENV
+#     value: "production"
+#   - variable: MY_API_KEY # Example environment variable
+#     value: "your_api_key_here" # For sensitive values, use secrets management.
+
+runConfig:
+  # Minimum number of instances to keep running.
+  # Set to 0 to minimize costs (can result in cold starts).
+  # Set to 1 or more for faster responses by keeping instances warm.
+  minInstances: 0
+  # Maximum number of instances to scale up to based on traffic.
+  maxInstances: 2 # Adjust this based on your expected traffic.
+  # Optional: Concurrency defines how many requests one instance can handle simultaneously.
+  # concurrency: 80
+  # Optional: CPU allocation per instance.
+  # cpu: 1
+  # Optional: Memory allocation per instance in MiB.
+  # memoryMiB: 512
+
+# Optional: Health checks to ensure your application is running correctly.
+# healthChecks:
+#   livenessProbe:
+#     httpGet:
+#       path: / # Your app's root path or a specific health check endpoint.
+#     initialDelaySeconds: 60 # How long to wait before the first probe.
+#     periodSeconds: 60 # How often to probe.
+#     timeoutSeconds: 5 # How long to wait for a response.
+#     failureThreshold: 3 # How many failures before marking as unhealthy.
+#     successThreshold: 1 # How many successes before marking as healthy.

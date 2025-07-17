@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import defaultTheme from 'tailwindcss/defaultTheme';
 
 export default {
     darkMode: ["class"],
@@ -8,16 +9,13 @@ export default {
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
-    container: {
-      center: true,
-      padding: "2rem",
-      screens: {
-        "2xl": "1400px",
-      },
-    },
   	extend: {
       fontFamily: {
-        sans: ["var(--font-inter)", "sans-serif"], // Use Inter font variable
+        heading: ['var(--font-playfair-display)', ...defaultTheme.fontFamily.serif],
+        body: ['var(--font-dm-sans)', ...defaultTheme.fontFamily.sans],
+        sans: ['var(--font-dm-sans)', ...defaultTheme.fontFamily.sans], // Keep for compatibility
+        serif: ['var(--font-playfair-display)', ...defaultTheme.fontFamily.serif], // Keep for compatibility
+        mono: ['var(--font-geist-mono)', ...defaultTheme.fontFamily.mono], // Assuming Geist Mono is still desired
       },
   		colors: {
   			background: 'hsl(var(--background))',
@@ -92,11 +90,21 @@ export default {
   				to: {
   					height: '0'
   				}
-  			}
+  			},
+        'fade-in': {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        'slide-in-up': {
+          '0%': { opacity: '0', transform: 'translateY(20px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        }
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
-  			'accordion-up': 'accordion-up 0.2s ease-out'
+  			'accordion-up': 'accordion-up 0.2s ease-out',
+        'fade-in': 'fade-in 0.5s ease-out forwards',
+        'slide-in-up': 'slide-in-up 0.5s ease-out forwards',
   		}
   	}
   },

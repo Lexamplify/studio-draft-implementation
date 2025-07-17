@@ -1,13 +1,12 @@
 {
   "projects": {
-    "default": "legalease-prod",
-    "products (legalease‑prod)": "legalease-prod"
+    "default": "lexamplify-landing-2b3c9"
   },
   "targets": {
-    "legalease-prod": {
+    "lexamplify-landing-2b3c9": {
       "hosting": {
-        "products": [
-          "lexamplify-products"
+        "landing": [
+          "lexamplify"
         ]
       }
     }
