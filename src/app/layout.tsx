@@ -1,26 +1,17 @@
 import type { Metadata } from 'next';
-import { Playfair_Display, DM_Sans } from 'next/font/google';
+import { Inter } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
-import Header from '@/components/layout/header';
-import Footer from '@/components/layout/footer';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 
-const playfairDisplay = Playfair_Display({
+const inter = Inter({
   subsets: ['latin'],
-  weight: ['400', '700', '900'], // Added more weights
-  variable: '--font-playfair-display',
-});
-
-const dmSans = DM_Sans({
-  subsets: ['latin'],
-  weight: ['400', '500', '700'], // Added more weights
-  variable: '--font-dm-sans',
+  variable: '--font-inter', // Define CSS variable for Inter font
 });
 
 export const metadata: Metadata = {
-  title: 'Lexamplify — AI for Lawyers in India',
-  description: 'Lexamplify empowers Indian legal professionals with AI tools for smarter drafting, research, and case management. Join the waitlist today.',
-  keywords: 'ai for lawyers, legaltech India, case law AI, legal drafting assistant, Indian legal research, Lexamplify',
+  title: 'LegalEase AI',
+  description: 'AI-powered legal assistance and document management.',
 };
 
 export default function RootLayout({
@@ -28,14 +19,20 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
+  if (!clientId) {
+    console.error('Google OAuth client ID not configured');
+  }
+
   return (
-    <html lang="en" className="scroll-smooth">
-      <body className={`${playfairDisplay.variable} ${dmSans.variable} font-body antialiased`}>
-        <Header />
-        {children}
-        <Footer />
-        <Toaster />
-      </body>
-    </html>
+    <GoogleOAuthProvider clientId={clientId ?? ''}>
+      <html lang="en" suppressHydrationWarning>
+        <body className={`${inter.variable} font-sans antialiased`}> {/* Apply Inter font variable and Tailwind's font-sans utility */}
+          {children}
+          <Toaster />
+        </body>
+      </html>
+    </GoogleOAuthProvider>
   );
 }

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -78,7 +77,7 @@ export function ContactForm() {
           variant: "destructive",
         });
       }
-    } catch (error:string) {
+    } catch (error) {
       toast({
         title: "Error",
         description: "An unexpected error occurred. Please try again later.",
