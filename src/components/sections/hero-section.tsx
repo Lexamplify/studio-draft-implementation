@@ -4,14 +4,13 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input"; // Keep Input for potential future use if needed, but not used directly in this version of hero
 import { ArrowRight } from "lucide-react";
-// Link import is removed as we are using programmatic scroll
+import { useRouter } from "next/navigation";
 
 const HeroSection = () => {
-  const handleScrollToWaitlist = () => {
-    const waitlistForm = document.getElementById('waitlist-form');
-    if (waitlistForm) {
-      waitlistForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
+  const router = useRouter();
+  
+  const handleGetStarted = () => {
+    router.push('/login');
   };
 
   return (
@@ -31,10 +30,10 @@ const HeroSection = () => {
           <Button
             size="lg"
             className="text-lg py-3.5 px-8 transition-all duration-300 ease-in-out bg-white hover:bg-neutral-200 text-primary hover:shadow-lg hover:scale-105 group font-body"
-            onClick={handleScrollToWaitlist}
+            onClick={handleGetStarted}
           >
             <>
-              Join Waitlist
+              Get Started
               <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1 text-primary" />
             </>
           </Button>
