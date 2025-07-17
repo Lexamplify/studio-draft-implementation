@@ -31,8 +31,8 @@ declare global {
 }
 
 const SEARCH_TEMPLATES_API_URL = process.env.NODE_ENV === 'production'
-  ? 'https://search-templates-350135218428.us-central1.run.app/api/search-templates'
-  : 'https://search-templates-350135218428.us-central1.run.app/api/search-templates';
+  ? 'https://search-templates-k-350135218428.asia-south1.run.app/api/search-templates'
+  : 'http://localhost:8000/api/search-templates';
 
 const getEmbedConfigForDraft = (docUrl?: string): { url: string; isEditable: boolean; error?: string } => {
   if (!docUrl) {

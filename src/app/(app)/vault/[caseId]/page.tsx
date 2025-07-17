@@ -2,6 +2,10 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
+
+type CaseMetadata = {
+  [key: string]: string | number | boolean | Date | null | undefined;
+};
 import {
   collection,
   getDocs,
@@ -34,7 +38,9 @@ const VaultCasePage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [uploading, setUploading] = useState<boolean>(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [caseMetadata, setCaseMetadata] = useState<unknown>(null);
+  type Metadata = CaseMetadata;
+
+  const [caseMetadata, setCaseMetadata] = useState<CaseMetadata | null>(null);
   const [metaLoading, setMetaLoading] = useState<boolean>(true);
   const [metaError, setMetaError] = useState<string | null>(null);
   const [editMode, setEditMode] = useState<boolean>(false);
@@ -67,9 +73,9 @@ const VaultCasePage: React.FC = () => {
     { key: 'notes', label: 'Notes/Remarks', type: 'textarea' },
   ];
 
-  const [editMetadata, setEditMetadata] = useState<unknown>({});
-  const [addFieldKey, setAddFieldKey] = useState<string>("");
-  const [customField, setCustomField] = useState<string>("");
+  const [editMetadata, setEditMetadata] = useState<CaseMetadata>({}); // Changed type to CaseMetadata
+  const [addFieldKey, setAddFieldKey] = useState<string>(""); // Changed type to string
+  const [customField, setCustomField] = useState<string>(""); // Changed type to string
   const [saving, setSaving] = useState<boolean>(false);
 
   // When entering edit mode, copy metadata
@@ -80,8 +86,8 @@ const VaultCasePage: React.FC = () => {
   }, [editMode, caseMetadata]);
 
   // Handle field change
-  const handleMetaChange = (key: string, value: unknown) => {
-    setEditMetadata((prev: unknown) => ({ ...prev, [key]: value }));
+  const handleMetaChange = (key: string, value: string | number | boolean | Date | null | undefined) => {
+    setEditMetadata((prev) => ({ ...prev, [key]: value }));
   };
 
   // Handle add field
@@ -91,7 +97,7 @@ const VaultCasePage: React.FC = () => {
       key = customField.trim().replace(/\s+/g, '_');
     }
     if (key && !editMetadata[key]) {
-      setEditMetadata((prev: unknown) => ({ ...prev, [key]: '' }));
+      setEditMetadata((prev: CaseMetadata) => ({ ...prev, [key]: '' }));
     }
     setAddFieldKey("");
     setCustomField("");
@@ -151,7 +157,21 @@ const VaultCasePage: React.FC = () => {
         const caseDocRef = firestoreDoc(db, "users", uid, "cases", caseId);
         const caseSnap = await getDoc(caseDocRef);
         if (caseSnap.exists()) {
-          setCaseMetadata(caseSnap.data().metadata || {});
+          const metadata = caseSnap.data().metadata || {};
+          
+          // bug fixed where filingDate was not being displayed in correct format and now it's updated before loading it to CaseMetadata.
+          if (metadata.filingDate) {
+            const date = typeof metadata.filingDate.toDate === 'function' 
+              ? metadata.filingDate.toDate() 
+              : new Date(metadata.filingDate);
+            metadata.filingDate = date.toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            });
+          }
+          
+          setCaseMetadata(metadata);
         } else {
           setCaseMetadata(null);
         }
