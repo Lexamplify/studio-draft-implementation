@@ -42,12 +42,19 @@ export default function LoginPage() {
       router.replace("/assistant");
     } catch (err: unknown) {
       console.error("Login error:", err);
-      if (err instanceof FirebaseError) setError(err.message);
-      else if (err instanceof Error) setError(err.message);
-      else setError("Login failed");
-    } finally {
-      setLoading(false);
-    }
+      if (err instanceof FirebaseError) {setError(err.message);
+        setLoading(false);
+
+      }
+      else if (err instanceof Error) {setError(err.message);
+        setLoading(false);
+
+      }
+      else {setError("Login failed");
+        setLoading(false);
+
+      }
+    } 
   };
 
   const handleEmailSignUp = async (e: React.FormEvent) => {
@@ -61,12 +68,19 @@ export default function LoginPage() {
       router.replace("/assistant");
     } catch (err: unknown) {
       console.error("Signup error:", err);
-      if (err instanceof FirebaseError) setError(err.message);
-      else if (err instanceof Error) setError(err.message);
-      else setError("Sign up failed");
-    } finally {
-      setLoading(false);
-    }
+      if (err instanceof FirebaseError) {setError(err.message);
+        setLoading(false);
+
+      }
+      else if (err instanceof Error) {setError(err.message);
+        setLoading(false);
+
+      }
+      else {setError("Sign up failed");
+        setLoading(false);
+
+      }
+    } 
   };
 
   const handleGoogleLogin = async () => {
@@ -89,25 +103,37 @@ export default function LoginPage() {
       const accessToken = credential?.accessToken;
       if (accessToken) {
         localStorage.setItem('googleAccessToken', accessToken);
-      }
-      console.log("Google login successful");
+        console.log("Google login successful");
       router.replace("/assistant");
+
+      }
+      
     } catch (err: unknown) {
       console.error("Google login error:", err);
       if (err instanceof FirebaseError) {
         // Add more specific error handling for OAuth errors
         if (err.code === 'auth/popup-closed-by-user') {
           setError('Login popup was closed. Please try again.');
+          setLoading(false);
+
         } else if (err.code === 'auth/popup-blocked') {
           setError('Login popup was blocked. Please allow popups for this site.');
+          setLoading(false);
+
         } else {
           setError(err.message);
+          setLoading(false);
+
         }
       }
-      else if (err instanceof Error) setError(err.message);
-      else setError("Google login failed");
-    } finally {
-      setLoading(false);
+      else if (err instanceof Error) {
+        setError(err.message);
+        setLoading(false);
+      }
+      else {
+        setError("Google login failed");
+        setLoading(false);
+      }
     }
   };
 
