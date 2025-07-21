@@ -247,11 +247,20 @@ This document is a [description based on document content]. [Additional 1-2 sent
 **Translation Guidelines:**
 1. **Preserve Template Structure**: Keep all placeholder brackets like [[appealNumber]], [[districtName]] exactly as they are - DO NOT translate these placeholders.
 2. **Legal Terminology**: Use accurate legal terms in {{targetLanguage}} with proper legal formatting.
-3. **Document Structure**: Maintain all headings, numbering, bullet points, and indentation.
+3. **Document Structure**: Maintain all headings, numbering, bullet points, and indentation exactly as in the original.
 4. **Professional Format**: Use markdown formatting with **bold text** for headings and important terms.
 5. **Cultural Accuracy**: Use appropriate legal language conventions for {{targetLanguage}}.
+6. **Pagination Handling**: If the document is long and split across multiple pages:
+   - Clearly indicate page breaks with "[Page X of Y]" where X is the current page and Y is the total number of pages
+   - Ensure the translation flows naturally across page breaks
+   - Maintain context when continuing between pages
+7. **Completeness**:
+   - Always translate the complete document from start to finish
+   - If the document is cut off, clearly indicate this with "[Document continues...]"
+   - Include all footnotes, references, and appendices
+   - Preserve all formatting, including tables, lists, and special characters
 
-**Important**: Present the translation in a clean, professional format using markdown. Make headings bold with ** and preserve the legal document structure.{{/if}}{{/if}}
+**Important**: Present the translation in a clean, professional format using markdown. Make headings bold with ** and preserve the legal document structure. Ensure the translation is complete and includes all content from the original document.{{/if}}{{/if}}
 {{/if}}
 
 {{#if isGenerateArgumentsAction}}
