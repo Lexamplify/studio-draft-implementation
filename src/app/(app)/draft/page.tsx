@@ -31,8 +31,8 @@ declare global {
 }
 
 const SEARCH_TEMPLATES_API_URL = process.env.NODE_ENV === 'production'
-  ? 'https://search-templates-k-350135218428.asia-south1.run.app/api/search-templates'
-  : 'http://localhost:8000/api/search-templates';
+  ? 'https://search-templates-k-350135218428.asia-south1.run.app/api/search-templates-k'
+  : 'https://search-templates-k-350135218428.asia-south1.run.app/api/search-templates-k';
 
 const getEmbedConfigForDraft = (docUrl?: string): { url: string; isEditable: boolean; error?: string } => {
   if (!docUrl) {
@@ -158,22 +158,36 @@ export default function DraftPage() {
 
   const login = useGoogleLogin({
     scope: 'https://www.googleapis.com/auth/drive.file',
+    prompt: 'select_account',
     onSuccess: tokenResponse => {
       console.log('Google OAuth success:', tokenResponse);
-      setGoogleAccessToken(tokenResponse.access_token);
+      const accessToken = tokenResponse.access_token;
+      setGoogleAccessToken(accessToken);
+      
+      // Store the token in localStorage for persistence
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('googleAccessToken', accessToken);
+      }
       
       // If there's a pending edit, execute it now
       if (pendingEditTemplate) {
-        handleEditDocumentWithToken(pendingEditTemplate, tokenResponse.access_token);
+        handleEditDocumentWithToken(pendingEditTemplate, accessToken);
         setPendingEditTemplate(null);
       }
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Google OAuth error:', error);
       toast({ 
         variant: "destructive", 
         title: "Google Login Failed", 
-        description: "Failed to authenticate with Google. Please try again." 
+        description: error.error_description || "Failed to authenticate with Google. Please try again." 
       });
+      
+      // Clear any invalid token
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('googleAccessToken');
+      }
+      setGoogleAccessToken(null);
     },
   });
 
@@ -466,14 +480,24 @@ export default function DraftPage() {
   const handleEditDocument = async (template: TemplateSearchResult) => {
     if (!template || !template.url) return;
     
-    // Check if we have a Google access token
-    if (!googleAccessToken) {
-      setPendingEditTemplate(template);
-      login(); // This will trigger Google OAuth flow
-      return;
+    // Check if we have a valid Google access token
+    if (googleAccessToken) {
+      try {
+        await handleEditDocumentWithToken(template, googleAccessToken);
+        return;
+      } catch (error) {
+        console.error('Error using stored token, will try to re-authenticate:', error);
+        // Clear the invalid token and continue to login flow
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('googleAccessToken');
+        }
+        setGoogleAccessToken(null);
+      }
     }
-
-    await handleEditDocumentWithToken(template, googleAccessToken);
+    
+    // If we get here, either there was no token or it was invalid
+    setPendingEditTemplate(template);
+    login(); // This will trigger Google OAuth flow
   };
 
   // Handler to close the editor
