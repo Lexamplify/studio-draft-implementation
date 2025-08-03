@@ -272,14 +272,54 @@ export default function DraftPage() {
     }
   }, [token, tokenLoading]);
 
-  // Fixed Google Picker implementation with Create New Folder option
+  // Handle creating a new folder in Google Drive
+  const handleCreateFolder = async (accessToken: string, callback: (folderId: string) => void) => {
+    const folderName = prompt('Enter folder name:');
+    if (!folderName) return;
+
+    try {
+      setIsEditingLoading(true);
+      const response = await fetch('https://www.googleapis.com/drive/v3/files', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: folderName,
+          mimeType: 'application/vnd.google-apps.folder',
+          parents: ['root']
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create folder');
+      }
+
+      const folder = await response.json();
+      toast({
+        title: 'Folder created',
+        description: `Folder "${folder.name}" was created successfully.`
+      });
+
+      // Return the new folder ID
+      callback(folder.id);
+    } catch (error) {
+      console.error('Error creating folder:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to create folder. Please try again.'
+      });
+    } finally {
+      setIsEditingLoading(false);
+    }
+  };
+
+  // Google Picker implementation for folder selection
   const showDriveFolderPicker = (accessToken: string, callback: (folderId: string) => void) => {
     if (!pickerReady) {
       toast({ variant: "destructive", title: "Google Picker Error", description: "Google Picker API not loaded yet. Please try again in a moment." });
-      return;
-    }
-    if (!window.gapi?.load || !window.google?.picker) {
-      toast({ variant: "destructive", title: "Google Picker Error", description: "Google Picker API not loaded." });
       return;
     }
 
@@ -295,107 +335,55 @@ export default function DraftPage() {
       return originalXHROpen.apply(this, arguments as any);
     };
 
-    console.log('Creating picker with access token:', accessToken?.substring(0, 20) + '...');
-    
     const view = new window.google.picker.DocsView(window.google.picker.ViewId.FOLDERS)
       .setIncludeFolders(true)
       .setSelectFolderEnabled(true)
       .setMode(window.google.picker.DocsViewMode.LIST);
-    
-    // Create a custom button for creating a new folder
-    const createFolderButton = window.document.createElement('div');
-    createFolderButton.innerHTML = 'CREATE A NEW FOLDER';
-    createFolderButton.style.cssText = `
-      background: #1a73e8;
-      color: white;
-      padding: 8px 16px;
-      border-radius: 4px;
-      margin: 8px;
-      cursor: pointer;
-      display: inline-block;
-      font-size: 13px;
-      font-weight: 500;
-    `;
-    
+
     const picker = new window.google.picker.PickerBuilder()
       .addView(view)
       .setOAuthToken(accessToken)
       .setDeveloperKey(process.env.NEXT_PUBLIC_GOOGLE_API_KEY || process.env.NEXT_PUBLIC_FIREBASE_API_KEY!)
       .setCallback((data: any) => {
-        console.log('Picker callback data:', data);
         if (data.action === window.google?.picker.Action.PICKED && data.docs && data.docs[0]) {
-          // Show loading state and slight delay for smooth transition
           setIsEditingLoading(true);
-          // Add a small delay to show the loading state
+          // Small delay for smooth transition
           setTimeout(() => {
-            // Hide the picker
             picker.setVisible(false);
-            // Execute the callback after a short delay to ensure smooth transition
-            setTimeout(() => {
-              callback(data.docs[0].id);
-            }, 100);
+            callback(data.docs[0].id);
           }, 300);
         } else if (data.action === window.google?.picker.Action.CANCEL) {
           toast({ title: "Picker Cancelled", description: "No folder selected." });
           setIsEditingLoading(false);
-        } else if (data.action === window.google?.picker.Action.LOADED) {
-          console.log('Picker loaded successfully');
-          // Add the create folder button to the picker UI
-          const buttons = document.querySelectorAll('.picker-dialog-buttons');
-          if (buttons && buttons[0]) {
-            buttons[0].prepend(createFolderButton);
-          }
         }
       })
       .setTitle("Select a folder to save your template")
       .setOrigin(window.location.protocol + '//' + window.location.host)
       .build();
-    
-    // Handle create folder button click
-    createFolderButton.onclick = async () => {
-      try {
-        const folderName = prompt('Enter folder name:');
-        if (!folderName) return;
-        
-        const response = await fetch('https://www.googleapis.com/drive/v3/files', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            name: folderName,
-            mimeType: 'application/vnd.google-apps.folder',
-            parents: ['root']
-          }),
-        });
-        
-        if (!response.ok) {
-          throw new Error('Failed to create folder');
-        }
-        
-        const folder = await response.json();
-        callback(folder.id);
-        picker.setVisible(false);
-      } catch (error) {
-        console.error('Error creating folder:', error);
-        toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: 'Failed to create folder. Please try again.',
-        });
-      }
+
+    // Clean up XMLHttpRequest override when picker is closed
+    const cleanup = () => {
+      window.XMLHttpRequest.prototype.open = originalXHROpen;
     };
-    
-    // Handle picker close event
-    const originalSetVisible = picker.setVisible;
-    picker.setVisible = function(visible: boolean) {
-      if (!visible) {
-        setIsEditingLoading(false);
+
+    // Set up a mutation observer to detect when the picker is closed
+    const observer = new MutationObserver((mutations) => {
+      const isPickerVisible = !!document.querySelector('.picker-dialog');
+      if (!isPickerVisible) {
+        cleanup();
+        observer.disconnect();
       }
-      return originalSetVisible.call(this, visible);
-    };
-    
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+
+    // Also set a timeout to clean up just in case
+    setTimeout(cleanup, 30000); // 30 seconds timeout
+
+    // Show the picker
     picker.setVisible(true);
   };
 

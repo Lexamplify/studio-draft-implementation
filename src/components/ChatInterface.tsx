@@ -311,8 +311,8 @@ File uploaded but could not be processed. You can still ask questions about this
     const file = e.target.files?.[0];
     if (!file) return;
     
-    // 10MB in bytes
-    const maxSize = 10 * 1024 * 1024;
+    // 15MB in bytes
+    const maxSize = 15 * 1024 * 1024;
     
     if (file.size > maxSize) {
       toast({
