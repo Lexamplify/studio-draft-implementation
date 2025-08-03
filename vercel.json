@@ -3,9 +3,7 @@
     "src/app/api/**/*.ts": {
       "maxDuration": 30,
       "memory": 3008,
-      "bodyParser": {
-        "sizeLimit": "15mb"
-      }
+      "maxBodySize": "15mb"
     }
   },
   "routes": [
