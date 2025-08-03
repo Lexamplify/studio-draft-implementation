@@ -3,7 +3,6 @@
     "src/app/api/**/*.ts": {
       "maxDuration": 30,
       "memory": 3008,
-      "maxBodyLength": 8388608,
       "bodyParser": {
         "sizeLimit": "15mb"
       }
@@ -11,9 +10,9 @@
   },
   "routes": [
     {
-      "src": "/api/upload",
-      "dest": "/api/upload",
-      "methods": ["POST"],
+      "src": "/api/(.*)",
+      "dest": "/api/$1",
+      "methods": ["POST", "GET"],
       "headers": {
         "Content-Type": "application/json"
       }
