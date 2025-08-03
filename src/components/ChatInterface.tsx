@@ -311,16 +311,33 @@ File uploaded but could not be processed. You can still ask questions about this
     const file = e.target.files?.[0];
     if (!file) return;
     
-    // 15MB in bytes
+    // 8MB in bytes (reduced from 15MB to match server limits)
     const maxSize = 15 * 1024 * 1024;
     
     if (file.size > maxSize) {
       toast({
         variant: "destructive",
         title: "File too large",
-        description: "Please upload a file smaller than 10MB.",
+        description: "Please upload a file smaller than 15MB.",
       });
       // Reset the file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      return;
+    }
+    
+    // Check file type
+    const allowedTypes = ['application/pdf', 'application/msword', 
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'text/plain'];
+      
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        variant: "destructive",
+        title: "Invalid file type",
+        description: "Please upload a PDF, DOC, DOCX, or TXT file.",
+      });
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
