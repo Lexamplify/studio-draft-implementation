@@ -31,8 +31,8 @@ declare global {
 }
 
 const SEARCH_TEMPLATES_API_URL = process.env.NODE_ENV === 'production'
-  ? 'https://search-templates-k-350135218428.asia-south1.run.app/api/search-templates'
-  : 'http://localhost:8000/api/search-templates';
+? 'https://search-templates-k-350135218428.asia-south1.run.app/api/search-templates'
+: 'https://search-templates-k-350135218428.asia-south1.run.app/api/search-templates';
 
 const getEmbedConfigForDraft = (docUrl?: string): { url: string; isEditable: boolean; error?: string } => {
   if (!docUrl) {
@@ -158,22 +158,36 @@ export default function DraftPage() {
 
   const login = useGoogleLogin({
     scope: 'https://www.googleapis.com/auth/drive.file',
+    prompt: 'select_account',
     onSuccess: tokenResponse => {
       console.log('Google OAuth success:', tokenResponse);
-      setGoogleAccessToken(tokenResponse.access_token);
+      const accessToken = tokenResponse.access_token;
+      setGoogleAccessToken(accessToken);
+      
+      // Store the token in localStorage for persistence
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('googleAccessToken', accessToken);
+      }
       
       // If there's a pending edit, execute it now
       if (pendingEditTemplate) {
-        handleEditDocumentWithToken(pendingEditTemplate, tokenResponse.access_token);
+        handleEditDocumentWithToken(pendingEditTemplate, accessToken);
         setPendingEditTemplate(null);
       }
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Google OAuth error:', error);
       toast({ 
         variant: "destructive", 
         title: "Google Login Failed", 
-        description: "Failed to authenticate with Google. Please try again." 
+        description: error.error_description || "Failed to authenticate with Google. Please try again." 
       });
+      
+      // Clear any invalid token
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('googleAccessToken');
+      }
+      setGoogleAccessToken(null);
     },
   });
 
@@ -258,7 +272,7 @@ export default function DraftPage() {
     }
   }, [token, tokenLoading]);
 
-  // Fixed Google Picker implementation
+  // Fixed Google Picker implementation with Create New Folder option
   const showDriveFolderPicker = (accessToken: string, callback: (folderId: string) => void) => {
     if (!pickerReady) {
       toast({ variant: "destructive", title: "Google Picker Error", description: "Google Picker API not loaded yet. Please try again in a moment." });
@@ -269,6 +283,18 @@ export default function DraftPage() {
       return;
     }
 
+    // Suppress Google Picker's analytics errors
+    const originalXHROpen = window.XMLHttpRequest.prototype.open;
+    window.XMLHttpRequest.prototype.open = function() {
+      const url = arguments[1];
+      if (url && typeof url === 'string' && url.includes('/picker/logImpressions')) {
+        // Don't send analytics requests
+        this.addEventListener = function() {};
+        this.send = function() {};
+      }
+      return originalXHROpen.apply(this, arguments as any);
+    };
+
     console.log('Creating picker with access token:', accessToken?.substring(0, 20) + '...');
     
     const view = new window.google.picker.DocsView(window.google.picker.ViewId.FOLDERS)
@@ -276,23 +302,103 @@ export default function DraftPage() {
       .setSelectFolderEnabled(true)
       .setMode(window.google.picker.DocsViewMode.LIST);
     
+    // Create a custom button for creating a new folder
+    const createFolderButton = window.document.createElement('div');
+    createFolderButton.innerHTML = 'CREATE A NEW FOLDER';
+    createFolderButton.style.cssText = `
+      background: #1a73e8;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 4px;
+      margin: 8px;
+      cursor: pointer;
+      display: inline-block;
+      font-size: 13px;
+      font-weight: 500;
+    `;
+    
     const picker = new window.google.picker.PickerBuilder()
       .addView(view)
-      .setOAuthToken(accessToken) // Use Google OAuth access token, not Firebase ID token
-      .setDeveloperKey(process.env.NEXT_PUBLIC_GOOGLE_API_KEY || process.env.NEXT_PUBLIC_FIREBASE_API_KEY!) // Use Google API key
+      .setOAuthToken(accessToken)
+      .setDeveloperKey(process.env.NEXT_PUBLIC_GOOGLE_API_KEY || process.env.NEXT_PUBLIC_FIREBASE_API_KEY!)
       .setCallback((data: any) => {
         console.log('Picker callback data:', data);
         if (data.action === window.google?.picker.Action.PICKED && data.docs && data.docs[0]) {
-          callback(data.docs[0].id);
+          // Show loading state and slight delay for smooth transition
+          setIsEditingLoading(true);
+          // Add a small delay to show the loading state
+          setTimeout(() => {
+            // Hide the picker
+            picker.setVisible(false);
+            // Execute the callback after a short delay to ensure smooth transition
+            setTimeout(() => {
+              callback(data.docs[0].id);
+            }, 100);
+          }, 300);
         } else if (data.action === window.google?.picker.Action.CANCEL) {
           toast({ title: "Picker Cancelled", description: "No folder selected." });
+          setIsEditingLoading(false);
         } else if (data.action === window.google?.picker.Action.LOADED) {
           console.log('Picker loaded successfully');
+          // Add the create folder button to the picker UI
+          const buttons = document.querySelectorAll('.picker-dialog-buttons');
+          if (buttons && buttons[0]) {
+            buttons[0].prepend(createFolderButton);
+          }
         }
       })
       .setTitle("Select a folder to save your template")
       .setOrigin(window.location.protocol + '//' + window.location.host)
       .build();
+    
+    // Handle create folder button click
+    createFolderButton.onclick = async () => {
+      try {
+        const folderName = prompt('Enter folder name:');
+        if (!folderName) return;
+        
+        const response = await fetch('https://www.googleapis.com/drive/v3/files', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: folderName,
+            mimeType: 'application/vnd.google-apps.folder',
+            parents: ['root']
+          }),
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to create folder');
+        }
+        
+        const folder = await response.json();
+        callback(folder.id);
+        picker.setVisible(false);
+      } catch (error) {
+        console.error('Error creating folder:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Failed to create folder. Please try again.',
+        });
+      }
+    };
+    
+    // Handle picker close event
+    const originalSetVisible = picker.setVisible;
+    picker.setVisible = function(visible: boolean) {
+      if (!visible) {
+        // Restore original XHR open when picker is closed
+        if (window.XMLHttpRequest.prototype.open !== originalXHROpen) {
+          window.XMLHttpRequest.prototype.open = originalXHROpen;
+        }
+        setIsEditingLoading(false);
+      }
+      return originalSetVisible.call(this, visible);
+    };
     
     picker.setVisible(true);
   };
@@ -466,14 +572,24 @@ export default function DraftPage() {
   const handleEditDocument = async (template: TemplateSearchResult) => {
     if (!template || !template.url) return;
     
-    // Check if we have a Google access token
-    if (!googleAccessToken) {
-      setPendingEditTemplate(template);
-      login(); // This will trigger Google OAuth flow
-      return;
+    // Check if we have a valid Google access token
+    if (googleAccessToken) {
+      try {
+        await handleEditDocumentWithToken(template, googleAccessToken);
+        return;
+      } catch (error) {
+        console.error('Error using stored token, will try to re-authenticate:', error);
+        // Clear the invalid token and continue to login flow
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('googleAccessToken');
+        }
+        setGoogleAccessToken(null);
+      }
     }
-
-    await handleEditDocumentWithToken(template, googleAccessToken);
+    
+    // If we get here, either there was no token or it was invalid
+    setPendingEditTemplate(template);
+    login(); // This will trigger Google OAuth flow
   };
 
   // Handler to close the editor

@@ -16,13 +16,196 @@ const GeneralChatInputSchema = z.object({
 });
 export type LegalAdviceChatInput = z.infer<typeof GeneralChatInputSchema>;
 
+// Module-level array to store citations with titles and optional URLs
+interface Citation {
+  title: string;
+  url?: string;
+}
+
+let storedCitations: Citation[] = [];
+
+// Function to get all stored citations with resolved URLs
+export async function getStoredCitations(): Promise<Array<{title: string, url?: string}>> {
+  // Return a deep copy of the citations
+  return JSON.parse(JSON.stringify(storedCitations));
+}
+
+// Function to clear stored citations
+export async function clearStoredCitations(): Promise<void> {
+  storedCitations = [];
+}
+import { OpenAI } from 'openai';
+
+const openai = new OpenAI({apiKey: process.env.OPENAI_API_KEY});
+
+
+// Helper function to extract just the case name (removes citation numbers after comma)
+function extractCaseName(fullCitation: string): string {
+  // Match everything before the first comma followed by a year or citation number
+  const match = fullCitation.match(/^([^,]+?)(?:,\s*\d{4}.*)?$/);
+  return match ? match[1].trim() : fullCitation;
+}
+
+async function findCaseUrl(title: string): Promise<string | null> {
+  try {
+    // Extract just the case name part (before comma and citation)
+    const caseName = extractCaseName(title);
+    console.log(`[LLM Search] Searching for case: "${caseName}" (original: "${title}")`);
+
+    const prompt = `
+You are a legal AI assistant. Your task is to find the **exact Indian Kanoon URL** for a given case title.
+
+Case Title: "${caseName}"
+
+Output Requirements:
+- Return only the **direct Indian Kanoon case URL** (e.g., https://indiankanoon.org/doc/1596139/)
+- If you **cannot find** the case, return exactly: **not found**
+- Do NOT explain anything. No extra text. No markdown. Only the URL or "not found".
+
+Make sure the URL leads to the **correct case document** matching the title.
+
+Begin output:
+`;
+
+    if (!process.env.OPENAI_API_KEY) {
+      console.error('OpenAI API key is not set in environment variables');
+      return null;
+    }
+
+    const response = await openai.chat.completions.create({
+      model: 'chatgpt-4o-latest',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.2,
+      max_tokens: 100,
+      top_p: 1,
+    });
+
+    let result = response.choices[0].message.content?.trim() || '';
+    
+    // If no result, try again with the full title as fallback
+    if (result === 'not found' && caseName !== title) {
+      console.log(`[LLM Search] Retrying with full citation: "${title}"`);
+      const fallbackResponse = await openai.chat.completions.create({
+        model: 'gpt-3.5-turbo',
+        messages: [{
+          role: 'user',
+          content: `Find the Indian Kanoon URL for this legal case. Return ONLY the URL or 'not found': ${title}`
+        }],
+        temperature: 0.2,
+        max_tokens: 100,
+      });
+      result = fallbackResponse.choices[0].message.content?.trim() || '';
+    }
+
+    if (result.toLowerCase() === 'not found' || !result.startsWith('http')) {
+      console.log(`[LLM Search] No URL found for: "${title}"`);
+      return null;
+    }
+
+    console.log(`[LLM Search] Found URL for "${title}":`, result);
+    return result;
+  } catch (error) {
+    console.error(`[LLM Search] Error searching for "${title}":`, error);
+    return null;
+  }
+}
+
+// Function to add a citation and find its URL using LLM
+export async function addCitation(title: string): Promise<void> {
+  // Check if we already have this citation
+  const existingCitation = storedCitations.find(c => c.title === title);
+  if (existingCitation) return;
+  
+  // Add the citation with just the title
+  const newCitation: Citation = { title };
+  storedCitations.push(newCitation);
+  
+  // Find the URL using LLM in the background
+  findCaseUrl(title)
+    .then(url => {
+      if (url) {
+        // Update the citation with the found URL
+        const citationIndex = storedCitations.findIndex(c => c.title === title);
+        if (citationIndex !== -1) {
+          storedCitations[citationIndex].url = url;
+          console.log(`[Citation] Updated URL for "${title}":`, url);
+        }
+      } else {
+        console.log(`[Citation] No URL found for: "${title}"`);
+      }
+    })
+    .catch(error => {
+      console.error('[Citation] Error finding case URL:', error);
+    });
+}
+
 const GeneralChatOutputSchema = z.object({
   answer: z.string().describe('The response in clean markdown format with **bold headings** and bullet points. NEVER use JSON format with curly braces or square brackets.')
 });
 export type LegalAdviceChatOutput = z.infer<typeof GeneralChatOutputSchema>;
 
+// Function to extract citation titles from text
+function extractCitationTitles(text: string): string[] {
+  // Match patterns like "- Citation: [Case Name, Citation]"
+  const citationRegex = /-\s*Citation:\s*\[([^\]]+)\]/g;
+  const citations: string[] = [];
+  let match;
+  
+  while ((match = citationRegex.exec(text)) !== null) {
+    const fullCitation = match[1].trim();
+    if (fullCitation && !citations.includes(fullCitation)) {
+      citations.push(fullCitation);
+    }
+  }
+  
+  return citations;
+}
+
+// Function to process citations in the response text
+async function processCitationsInText(text: string): Promise<string> {
+  console.log('[Citation Processing] Starting citation processing');
+  
+  // Extract citation titles
+  const citations = extractCitationTitles(text);
+  console.log(`[Citation Processing] Found ${citations.length} citations in text`);
+  
+  if (citations.length > 0) {
+    console.log('[Citation Processing] Citations found:', citations);
+    
+    // Add each citation to our storage
+    for (const title of citations) {
+      console.log(`[Citation Processing] Adding citation: ${title}`);
+      await addCitation(title);
+    }
+  } else {
+    console.log('[Citation Processing] No citations found in the text');
+  }
+  
+  // Get the current state of citations (with any resolved URLs)
+  const currentCitations = await getStoredCitations();
+  
+  // Replace citation placeholders with formatted links
+  let processedText = text;
+  for (const citation of currentCitations) {
+    const citationPattern = new RegExp(`\\[${citation.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:, [^\]]+)?\(\d{4}\)\\]`, 'g');
+    
+    if (citation.url) {
+      // Replace with markdown link if we have a URL
+      processedText = processedText.replace(
+        citationPattern, 
+        `[${citation.title}](${citation.url})`
+      );
+    } else {
+      // Just remove the brackets if we don't have a URL yet
+      processedText = processedText.replace(citationPattern, citation.title);
+    }
+  }
+  
+  return processedText;
+}
+
 // Function to convert JSON responses to clean markdown
-function convertJsonToMarkdown(text: string): string {
+async function convertJsonToMarkdown(text: string): Promise<string> {
   // Check if the response looks like JSON
   if (text.trim().startsWith('{') && text.trim().endsWith('}')) {
     try {
@@ -199,69 +382,103 @@ Content: {{document}}
 
 User's current question/input: "{{{question}}}"
 User's Chosen Workflow: "{{{action}}}"
-
 {{#if isSummarizeAction}}
 ---
-**WORKFLOW: Summarize Document**
-**Step 1: Clarify & Check Upload**
-• {{#unless document}}If no document has been uploaded, respond:
-  "Please upload the document you want summarized."
-  Do not proceed further until the user provides a file.{{/unless}}
+**WORKFLOW: Legal Case Summary Generator**
 
-**Step 2: Summarize with Precision**
-• {{#if document}}🚫 CRITICAL: DO NOT use JSON format like {"Document Title": "...", "I. Overview": "...", "II. Key Points": [...]}
+**Step 1: Upload Verification**
+• {{#unless document}}⚠️ Please upload the legal case document (PDF or text). Analysis cannot proceed without it.{{/unless}}
 
-PRODUCE THE SUMMARY IN THIS EXACT FORMAT:
+**Step 2: Structured Case Analysis & Summarization**
+• {{#if document}}🚫 DO NOT use JSON, YAML, or any code block formatting.
 
-**Document Title:** {{documentName}}
+⚖️ **FORMAT TO FOLLOW STRICTLY:**
 
-**I. Overview**
-This document is a [description based on document content]. [Additional 1-2 sentences about purpose and context].
-
-**II. Key Points**
-• **First key point:** [Description with relevant legal provisions]
-• **Second key point:** [Description with relevant legal provisions]  
-• **Third key point:** [Description with relevant legal provisions]
-• **Additional points as needed**
-
-**III. Conclusion**
-[Final summary sentence based on document content explaining the overall purpose and outcome sought]
-
-**ABSOLUTE REQUIREMENT:** Present as clean, readable text with markdown formatting. NO JSON objects, NO curly braces, NO square brackets for structure.{{/if}}
-{{/if}}
-
-{{#if isTranslateAction}}
 ---
-**WORKFLOW: Translate Document**
-**Step 1: Clarify Upload & Target Language**
-• {{#unless document}}If no document has been uploaded, respond:
-  "Please upload the document you wish to translate."
-  Pause until the user uploads the file.{{/unless}}
-• {{#unless targetLanguage}}If target language is not provided, respond:
-  "Which language do you want this document translated into? (e.g. Hindi, English, Tamil, etc.)"
-  Pause until the user provides the language.{{/unless}}
 
-**Step 2: Translate with Professional Formatting**
-• {{#if document}}{{#if targetLanguage}}Translate the document into {{targetLanguage}} with the following guidelines:
+## ⚖️ **CASE SUMMARY**
 
-**Translation Guidelines:**
-1. **Preserve Template Structure**: Keep all placeholder brackets like [[appealNumber]], [[districtName]] exactly as they are - DO NOT translate these placeholders.
-2. **Legal Terminology**: Use accurate legal terms in {{targetLanguage}} with proper legal formatting.
-3. **Document Structure**: Maintain all headings, numbering, bullet points, and indentation exactly as in the original.
-4. **Professional Format**: Use markdown formatting with **bold text** for headings and important terms.
-5. **Cultural Accuracy**: Use appropriate legal language conventions for {{targetLanguage}}.
-6. **Pagination Handling**: If the document is long and split across multiple pages:
-   - Clearly indicate page breaks with "[Page X of Y]" where X is the current page and Y is the total number of pages
-   - Ensure the translation flows naturally across page breaks
-   - Maintain context when continuing between pages
-7. **Completeness**:
-   - Always translate the complete document from start to finish
-   - If the document is cut off, clearly indicate this with "[Document continues...]"
-   - Include all footnotes, references, and appendices
-   - Preserve all formatting, including tables, lists, and special characters
+### 📌 **Case Identification**
+- **Case Title:** {{documentName}}
+- **Case No. / FIR No.:** [Insert if mentioned]
+- **Court:** [Insert court name or location]
+- **Jurisdiction / Location:** [Insert city/state]
+- **Date Filed:** [Insert date]
+- **Judge(s):** [Insert if available]
 
-**Important**: Present the translation in a clean, professional format using markdown. Make headings bold with ** and preserve the legal document structure. Ensure the translation is complete and includes all content from the original document.{{/if}}{{/if}}
+---
+
+### 📄 **Case Snapshot**
+- **Case Type:** [Civil / Criminal / Family / Other]
+- **Legal Sections Involved:** [e.g., IPC 323, CrPC 156(3)]
+- **Stage:** [Pre-trial, Trial, Disposed, etc.]
+- **Relief Sought:** [e.g., Compensation, Injunction, Bail]
+
+---
+
+### 👤 **Parties Involved**
+- **Petitioner(s) / Complainant:** [Insert]
+- **Respondent(s) / Accused:** [Insert]
+- **Advocates:**
+  - For Petitioner: [Insert if known]
+  - For Respondent: [Insert if known]
+
+---
+
+### 📚 **Facts of the Case**
+_A concise 4–6 line summary of the dispute or issue that triggered legal action._
+
+---
+
+### ⚖️ **Legal Issues Raised**
+- [Legal question 1]
+- [Legal question 2]
+
+---
+
+### 🧩 **Arguments Summary**
+**Petitioner’s Side:**
+- [Key point 1]
+- [Key point 2]
+
+**Respondent’s Side:**
+- [Key point 1]
+- [Key point 2]
+
+---
+
+### 🧾 **Evidence Summary**
+- **Documents:** [List major ones]
+- **Witnesses:** [Mention key roles or names]
+
+---
+
+### 🧑‍⚖️ **Court Observations**
+- [Any remarks by the court or interim findings]
+
+---
+
+### 📢 **Outcome / Order**
+- **Current Status:** [Pending, Dismissed, Allowed, etc.]
+- **Next Hearing Date:** [If applicable]
+- **Final Order:** [Summarized in one line if present]
+
+---
+
+### 🧠 **Legal Notes / Strategic Observations**
+- [Any relevant precedents, red flags, or suggestions for legal follow-up]
+
+---
+
+## 📁 **Tags:** [e.g., Criminal, IPC 323, Delhi Court, 2025]
+
+---
+
+**DO NOT INCLUDE BRACKETS**, no markdown headings like '#', and no JSON-style formatting. Provide only **clean, readable plain text with markdown elements** for clarity.
+
 {{/if}}
+{{/if}}
+
 
 {{#if isGenerateArgumentsAction}}
 ---
@@ -279,19 +496,19 @@ Write a concise 2–3 line summary of the case factual background and legal issu
 
 **Section 2: Arguments in Favor**
 • **Argument 1:** [Description of first argument]
-  - Citation: [Provide at least one real, relevant, and recent Indian Supreme Court or High Court case law as a markdown hyperlink, e.g., [Case Name, Citation](https://indiankanoon.org/doc/xxxxxx/). The link must be the correct, real, and matching link to the cited case. Do NOT cite only statutes.]
+  - Citation: [Case Name, Citation (Year) - The system will automatically find and link this citation]
 • **Argument 2:** [Description of second argument]
-  - Citation: [Provide at least one real, relevant, and recent Indian Supreme Court or High Court case law as a markdown hyperlink with the correct, real, and matching link.]
+  - Citation: [Case Name, Citation (Year) - The system will automatically find and link this citation]
 • **Argument 3:** [Description of third argument]
-  - Citation: [Provide at least one real, relevant, and recent Indian Supreme Court or High Court case law as a markdown hyperlink with the correct, real, and matching link.]
+  - Citation: [Case Name, Citation (Year) - The system will automatically find and link this citation]
 
 **Section 3: Counter-Arguments**
 • **Counter-Argument 1:** [Description of first counter-argument]
-  - Citation: [Provide at least one real, relevant, and recent Indian Supreme Court or High Court case law as a markdown hyperlink with the correct, real, and matching link.]
+  - Citation: [Case Name, Citation (Year) - The system will automatically find and link this citation]
 • **Counter-Argument 2:** [Description of second counter-argument]
-  - Citation: [Provide at least one real, relevant, and recent Indian Supreme Court or High Court case law as a markdown hyperlink with the correct, real, and matching link.]
+  - Citation: [Case Name, Citation (Year) - The system will automatically find and link this citation]
 • **Counter-Argument 3:** [Description of third counter-argument]
-  - Citation: [Provide at least one real, relevant, and recent Indian Supreme Court or High Court case law as a markdown hyperlink with the correct, real, and matching link.]
+  - Citation: [Case Name, Citation (Year) - The system will automatically find and link this citation]
 
 **CRITICAL LINK VALIDATION REQUIREMENTS:**
 🚫 **ABSOLUTELY FORBIDDEN:**
@@ -432,6 +649,8 @@ const legalAdviceChatFlow = ai.defineFlow(
   },
   async (input: LegalAdviceChatInput): Promise<LegalAdviceChatOutput> => {
     try {
+      console.log('[Process Flow] Starting legal advice chat flow');
+      
       // Detect workflow from the question
       const detectedAction = detectWorkflow(input.question);
       
@@ -449,6 +668,7 @@ const legalAdviceChatFlow = ai.defineFlow(
       
       // For arguments workflow, use the question as case description if not provided
       if (detectedAction === 'generateArguments' && !caseDescription) {
+
         caseDescription = input.question;
       }
       
@@ -477,7 +697,12 @@ const legalAdviceChatFlow = ai.defineFlow(
       }
       
       // Post-process to convert JSON to markdown if AI still returns JSON
-      finalAnswer = convertJsonToMarkdown(finalAnswer);
+      finalAnswer = await convertJsonToMarkdown(finalAnswer);
+      
+      // Process citations in the final answer
+      console.log('[Process Flow] Before processing citations:', finalAnswer);
+      finalAnswer = await processCitationsInText(finalAnswer);
+      console.log('[Process Flow] After processing citations:', finalAnswer);
       
       return { answer: finalAnswer };
     } catch (error) {

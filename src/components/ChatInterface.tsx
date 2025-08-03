@@ -309,9 +309,25 @@ File uploaded but could not be processed. You can still ask questions about this
   // Handle file input change
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      handleFileUpload(file);
+    if (!file) return;
+    
+    // 10MB in bytes
+    const maxSize = 10 * 1024 * 1024;
+    
+    if (file.size > maxSize) {
+      toast({
+        variant: "destructive",
+        title: "File too large",
+        description: "Please upload a file smaller than 10MB.",
+      });
+      // Reset the file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      return;
     }
+    
+    handleFileUpload(file);
   };
 
   // Handle upload button click
