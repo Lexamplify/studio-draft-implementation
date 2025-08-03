@@ -31,8 +31,8 @@ declare global {
 }
 
 const SEARCH_TEMPLATES_API_URL = process.env.NODE_ENV === 'production'
-  ? 'https://search-templates-k-350135218428.asia-south1.run.app/api/search-templates'
-  : 'http://localhost:8000/api/search-templates';
+  ? 'https://search-templates-k-350135218428.asia-south1.run.app/api/search-templates-k'
+  : 'https://search-templates-k-350135218428.asia-south1.run.app/api/search-templates-k';
 
 const getEmbedConfigForDraft = (docUrl?: string): { url: string; isEditable: boolean; error?: string } => {
   if (!docUrl) {
@@ -272,7 +272,7 @@ export default function DraftPage() {
     }
   }, [token, tokenLoading]);
 
-  // Fixed Google Picker implementation
+  // Fixed Google Picker implementation with Create New Folder option
   const showDriveFolderPicker = (accessToken: string, callback: (folderId: string) => void) => {
     if (!pickerReady) {
       toast({ variant: "destructive", title: "Google Picker Error", description: "Google Picker API not loaded yet. Please try again in a moment." });
@@ -290,23 +290,99 @@ export default function DraftPage() {
       .setSelectFolderEnabled(true)
       .setMode(window.google.picker.DocsViewMode.LIST);
     
+    // Create a custom button for creating a new folder
+    const createFolderButton = window.document.createElement('div');
+    createFolderButton.innerHTML = 'CREATE A NEW FOLDER';
+    createFolderButton.style.cssText = `
+      background: #1a73e8;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 4px;
+      margin: 8px;
+      cursor: pointer;
+      display: inline-block;
+      font-size: 13px;
+      font-weight: 500;
+    `;
+    
     const picker = new window.google.picker.PickerBuilder()
       .addView(view)
-      .setOAuthToken(accessToken) // Use Google OAuth access token, not Firebase ID token
-      .setDeveloperKey(process.env.NEXT_PUBLIC_GOOGLE_API_KEY || process.env.NEXT_PUBLIC_FIREBASE_API_KEY!) // Use Google API key
+      .setOAuthToken(accessToken)
+      .setDeveloperKey(process.env.NEXT_PUBLIC_GOOGLE_API_KEY || process.env.NEXT_PUBLIC_FIREBASE_API_KEY!)
       .setCallback((data: any) => {
         console.log('Picker callback data:', data);
         if (data.action === window.google?.picker.Action.PICKED && data.docs && data.docs[0]) {
-          callback(data.docs[0].id);
+          // Show loading state and slight delay for smooth transition
+          setIsEditingLoading(true);
+          // Add a small delay to show the loading state
+          setTimeout(() => {
+            // Hide the picker
+            picker.setVisible(false);
+            // Execute the callback after a short delay to ensure smooth transition
+            setTimeout(() => {
+              callback(data.docs[0].id);
+            }, 100);
+          }, 300);
         } else if (data.action === window.google?.picker.Action.CANCEL) {
           toast({ title: "Picker Cancelled", description: "No folder selected." });
+          setIsEditingLoading(false);
         } else if (data.action === window.google?.picker.Action.LOADED) {
           console.log('Picker loaded successfully');
+          // Add the create folder button to the picker UI
+          const buttons = document.querySelectorAll('.picker-dialog-buttons');
+          if (buttons && buttons[0]) {
+            buttons[0].prepend(createFolderButton);
+          }
         }
       })
       .setTitle("Select a folder to save your template")
       .setOrigin(window.location.protocol + '//' + window.location.host)
       .build();
+    
+    // Handle create folder button click
+    createFolderButton.onclick = async () => {
+      try {
+        const folderName = prompt('Enter folder name:');
+        if (!folderName) return;
+        
+        const response = await fetch('https://www.googleapis.com/drive/v3/files', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: folderName,
+            mimeType: 'application/vnd.google-apps.folder',
+            parents: ['root']
+          }),
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to create folder');
+        }
+        
+        const folder = await response.json();
+        callback(folder.id);
+        picker.setVisible(false);
+      } catch (error) {
+        console.error('Error creating folder:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Failed to create folder. Please try again.',
+        });
+      }
+    };
+    
+    // Handle picker close event
+    const originalSetVisible = picker.setVisible;
+    picker.setVisible = function(visible: boolean) {
+      if (!visible) {
+        setIsEditingLoading(false);
+      }
+      return originalSetVisible.call(this, visible);
+    };
     
     picker.setVisible(true);
   };
