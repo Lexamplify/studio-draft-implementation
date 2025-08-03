@@ -391,10 +391,6 @@ export default function DraftPage() {
     const originalSetVisible = picker.setVisible;
     picker.setVisible = function(visible: boolean) {
       if (!visible) {
-        // Restore original XHR open when picker is closed
-        if (window.XMLHttpRequest.prototype.open !== originalXHROpen) {
-          window.XMLHttpRequest.prototype.open = originalXHROpen;
-        }
         setIsEditingLoading(false);
       }
       return originalSetVisible.call(this, visible);
