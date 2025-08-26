@@ -38,6 +38,7 @@
     "@react-oauth/google": "^0.12.2",
     "@tanstack-query-firebase/react": "^1.0.5",
     "@tanstack/react-query": "^5.66.0",
+    "@umoteam/editor": "^7.0.1",
     "axios": "^1.10.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -49,6 +50,7 @@
     "formidable": "^3.5.4",
     "genkit": "^1.8.0",
     "googleapis": "^150.0.1",
+    "lex-draft-editor": "^7.0.1",
     "lucide-react": "^0.475.0",
     "mammoth": "^1.9.1",
     "next": "15.2.3",
@@ -66,6 +68,8 @@
     "recharts": "^2.15.1",
     "tailwind-merge": "^3.0.1",
     "tailwindcss-animate": "^1.0.7",
+    "vue": "^3.5.18",
+    "vue-in-react": "^0.1.1",
     "zod": "^3.24.2"
   },
   "devDependencies": {
