@@ -3,14 +3,6 @@ import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
   /* config options here */
-  webpack(config) {
-    config.module.rules.push({
-      test: /\.css$/i,
-      use: ["style-loader", "css-loader"],
-      include: /node_modules[\\/]lex-draft-editor/,
-    });
-    return config;
-  },
   typescript: {
     ignoreBuildErrors: true,
   },

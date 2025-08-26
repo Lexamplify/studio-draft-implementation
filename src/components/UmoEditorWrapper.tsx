@@ -16,7 +16,7 @@ export default function UmoEditorWrapper({ options = {} }: UmoEditorWrapperProps
     if (editorRef.current && !isMounted.current) {
       isMounted.current = true;
 
-      // Import the Umo Editor CSS dynamically
+      // Load editor CSS (Next built-in CSS handling)
       const loadCSS = async () => {
         try {
           await import('@umoteam/editor/dist/style.css');
