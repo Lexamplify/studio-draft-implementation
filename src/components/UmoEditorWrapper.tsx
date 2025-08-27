@@ -19,7 +19,7 @@ export default function UmoEditorWrapper({ options = {} }: UmoEditorWrapperProps
       // Load editor CSS (Next built-in CSS handling)
       const loadCSS = async () => {
         try {
-          await import('@umoteam/editor/dist/style.css');
+          await import('lexteam-editor');
         } catch (error) {
           console.warn('Could not import Umo Editor CSS:', error);
         }
@@ -28,7 +28,7 @@ export default function UmoEditorWrapper({ options = {} }: UmoEditorWrapperProps
 
       Promise.all([
         import('vue'),
-        import('@umoteam/editor')
+        import('lexteam-editor')
       ]).then(([{ createApp }, umoEditorModule]) => {
         // Use type assertion to bypass TypeScript errors
         const module = umoEditorModule as any;
