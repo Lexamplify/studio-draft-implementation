@@ -1,12 +1,19 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, Playfair_Display } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { GoogleOAuthProvider } from '@react-oauth/google';
 
 const inter = Inter({
   subsets: ['latin'],
-  variable: '--font-inter', // Define CSS variable for Inter font
+  variable: '--font-dm-sans',
+  display: 'swap',
+});
+
+const playfair = Playfair_Display({
+  subsets: ['latin'],
+  variable: '--font-playfair-display',
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -28,7 +35,7 @@ export default function RootLayout({
   return (
     <GoogleOAuthProvider clientId={clientId ?? ''}>
       <html lang="en" suppressHydrationWarning>
-        <body className={`${inter.variable} font-sans antialiased`}> {/* Apply Inter font variable and Tailwind's font-sans utility */}
+        <body className={`${inter.variable} ${playfair.variable} font-sans antialiased`}>
           {children}
           <Toaster />
         </body>

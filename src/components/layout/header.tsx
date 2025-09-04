@@ -5,7 +5,7 @@ import LexamplifyLogo from '@/components/lexamplify-logo';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu, LogIn, CalendarPlus } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const navLinks = [
   { href: '#home', label: 'Home' },
@@ -24,12 +24,21 @@ const actionLinks = [
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => {
+      setScrolled(window.scrollY > 8);
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   const handleLinkClick = (href: string) => {
     setIsMobileMenuOpen(false);
     
     if (href.startsWith('#')) {
-      // Smooth scroll to section
       const element = document.querySelector(href);
       if (element) {
         element.scrollIntoView({ 
@@ -41,7 +50,7 @@ const Header = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/20 bg-white/80 backdrop-blur-lg supports-[backdrop-filter]:bg-white/60 shadow-lg">
+    <header className={`sticky top-0 z-50 w-full transition-colors duration-300 ${scrolled ? 'border-b border-border/20 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/70 shadow-md' : 'bg-transparent'}`}>
       <div className="container flex h-20 max-w-screen-2xl items-center justify-between px-6 md:px-10 lg:px-16 xl:px-20">
         <Link href="/" className="flex items-center space-x-2" onClick={() => handleLinkClick('/')}>
           <LexamplifyLogo />
@@ -53,7 +62,7 @@ const Header = () => {
             <button
               key={link.label}
               onClick={() => handleLinkClick(link.href)}
-              className="text-foreground/80 hover:text-primary transition-colors duration-200 font-medium text-sm"
+              className="relative text-foreground/80 hover:text-primary transition-colors duration-200 font-medium text-sm after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-current after:transition-all after:duration-300 hover:after:w-full"
             >
               {link.label}
             </button>
@@ -67,7 +76,7 @@ const Header = () => {
               key={link.label} 
               variant={link.variant as any}
               size="sm" 
-              className={`${link.variant === "default" ? "transition-all duration-300 ease-in-out hover:shadow-lg group" : "text-foreground/80 hover:text-primary"} px-4 py-2`}
+              className={`${link.variant === "default" ? "transition-all duration-300 ease-out hover:shadow-lg group" : "text-foreground/80 hover:text-primary"} px-4 py-2`}
               onClick={() => handleLinkClick(link.href)}
             >
               <>
