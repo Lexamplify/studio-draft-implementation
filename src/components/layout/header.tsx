@@ -50,7 +50,7 @@ const Header = () => {
   };
 
   return (
-    <header className={`sticky top-0 z-50 w-full transition-colors duration-300 ${scrolled ? 'border-b border-border/20 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/70 shadow-md' : 'bg-transparent'}`}>
+    <header className={`sticky top-0 z-50 w-full transition-colors duration-300 ${scrolled ? 'border-b border-white/20 bg-black/90 backdrop-blur supports-[backdrop-filter]:bg-black/70 shadow-md' : 'bg-transparent'}`}>
       <div className="container flex h-20 max-w-screen-2xl items-center justify-between px-6 md:px-10 lg:px-16 xl:px-20">
         <Link href="/" className="flex items-center space-x-2" onClick={() => handleLinkClick('/')}>
           <LexamplifyLogo />
@@ -62,7 +62,7 @@ const Header = () => {
             <button
               key={link.label}
               onClick={() => handleLinkClick(link.href)}
-              className="relative text-foreground/80 hover:text-primary transition-colors duration-200 font-medium text-sm after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-current after:transition-all after:duration-300 hover:after:w-full"
+              className="relative text-white/80 hover:text-teal-400 transition-colors duration-200 font-medium text-sm after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-current after:transition-all after:duration-300 hover:after:w-full"
             >
               {link.label}
             </button>
@@ -76,7 +76,7 @@ const Header = () => {
               key={link.label} 
               variant={link.variant as any}
               size="sm" 
-              className={`${link.variant === "default" ? "transition-all duration-300 ease-out hover:shadow-lg group" : "text-foreground/80 hover:text-primary"} px-4 py-2`}
+              className={`${link.variant === "default" ? "transition-all duration-300 ease-out hover:shadow-lg group bg-teal-400 text-black hover:bg-teal-400/90" : "text-white/80 hover:text-teal-400"} px-4 py-2`}
               onClick={() => handleLinkClick(link.href)}
             >
               <>
@@ -96,7 +96,7 @@ const Header = () => {
                 <span className="sr-only">Toggle Menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-full max-w-xs bg-background">
+            <SheetContent side="right" className="w-full max-w-xs bg-black border-white/20">
               <div className="p-4">
                 <Link href="/" className="mb-8 flex items-center" onClick={() => handleLinkClick('/')}>
                   <LexamplifyLogo />
@@ -108,7 +108,7 @@ const Header = () => {
                     <button
                       key={link.label}
                       onClick={() => handleLinkClick(link.href)}
-                      className="text-left text-base py-2 text-foreground/80 hover:text-primary transition-colors duration-200 font-medium"
+                      className="text-left text-base py-2 text-white/80 hover:text-teal-400 transition-colors duration-200 font-medium"
                     >
                       {link.label}
                     </button>

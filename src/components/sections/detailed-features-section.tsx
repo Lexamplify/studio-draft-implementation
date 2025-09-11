@@ -3,9 +3,8 @@
 
 import Image from 'next/image';
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
-import { ArrowRight, CheckCircle, FileText, MessageSquare, BarChart2, CalendarClock, Brain } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { FileText, MessageSquare, BarChart2, CalendarClock, Brain } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface FeatureItem {
@@ -13,139 +12,125 @@ interface FeatureItem {
   icon: React.ReactNode;
   title: string;
   description: string;
-  longDescription: string;
   imageUrl: string;
   imageAlt: string;
-  dataAiHint: string;
-  learnMoreLink: string;
 }
 
 const featureItems: FeatureItem[] = [
   {
     id: 'case-storing',
-    icon: <FileText className="h-6 w-6 text-primary" />,
+    icon: <FileText className="h-6 w-6" />,
     title: 'Smart Case Management',
-    description: 'Effortlessly organize and access all your legal documents in one secure location',
-    longDescription: 'Our advanced case management system provides secure, cloud-based storage for all your legal documents. Quickly find what you need with intelligent search and categorization features, ensuring your case files are always at your fingertips when you need them most.',
+    description: 'Effortlessly organize and access all your legal documents in one secure location.',
     imageUrl: '/Vault_mockup.png',
     imageAlt: 'Smart Case Management UI',
-    dataAiHint: 'case and document storing interface',
-    learnMoreLink: '#',
   },
   {
     id: 'legal-drafting',
-    icon: <Brain className="h-6 w-6 text-primary" />, 
+    icon: <Brain className="h-6 w-6" />, 
     title: 'AI Legal Drafting',
     description: 'Enhance your drafting with AI-powered suggestions.',
-    longDescription: 'Go beyond templates with AI that suggests relevant clauses, checks for consistency, and helps refine your legal arguments within documents. Improve the quality and coherence of your legal writing with intelligent assistance.',
     imageUrl: '/Draft_mockup.png',
     imageAlt: 'AI Legal Drafting UI',
-    dataAiHint: 'ai writing assistant',
-    learnMoreLink: '#',
   },
   {
     id: 'case-timeline',
-    icon: <CalendarClock className="h-6 w-6 text-primary" />,
+    icon: <CalendarClock className="h-6 w-6" />,
     title: 'Case Timeline',
     description: 'Visualize and manage case progress effectively.',
-    longDescription: 'Track key dates, events, and deadlines with an interactive case timeline. Get a clear overview of case progress, set reminders, and ensure you never miss an important milestone. Share timelines with your team for better collaboration.',
     imageUrl: '/Calender_month_mockup.png',
     imageAlt: 'Case Timeline UI',
-    dataAiHint: 'gantt chart project',
-    learnMoreLink: '#',
   },
   {
     id: 'ai-chat',
-    icon: <MessageSquare className="h-6 w-6 text-primary" />,
+    icon: <MessageSquare className="h-6 w-6" />,
     title: 'AI Chat Assistant',
     description: 'Get instant answers to your legal queries.',
-    longDescription: 'Interact with an AI assistant trained on Indian law. Ask legal questions, get summaries of case law, or brainstorm legal strategies. Your AI chat partner is available 24/7 to support your research and analysis.',
     imageUrl: '/Assistant_mockup.png',
     imageAlt: 'AI Chat UI',
-    dataAiHint: 'chatbot interface conversation',
-    learnMoreLink: '#',
   },
   {
     id: 'analytics',
-    icon: <BarChart2 className="h-6 w-6 text-primary" />,
+    icon: <BarChart2 className="h-6 w-6" />,
     title: 'Legal Analytics',
     description: 'Unlock data-driven insights for your practice.',
-    longDescription: 'Gain valuable insights from past cases and legal trends. Understand success rates for different argument types, identify patterns in judgments, and make more informed strategic decisions for your cases and firm.',
     imageUrl: '/Analytics_mockup.png',
     imageAlt: 'Legal Analytics Dashboard',
-    dataAiHint: 'data dashboard charts',
-    learnMoreLink: '#',
   },
 ];
 
-const DetailedFeaturesSection = () => {
+const ImageNavFull = () => {
   const [activeFeature, setActiveFeature] = useState<FeatureItem>(featureItems[0]);
 
   return (
-    <section id="detailed-features" className="bg-background text-foreground">
-      <div className="container mx-auto px-6">
-        <div className="text-center mb-12 md:mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-primary mb-3">
-            We have your back the whole way
-          </h2>
-          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-            Lexamplify's comprehensive suite of AI-powered tools is designed to address every facet of your legal practice, simplifying complex tasks and enhancing your overall efficiency.
-          </p>
+    <div className="w-full max-w-6xl mx-auto p-6 rounded-2xl bg-gradient-to-b from-[#020428] to-[#010048] shadow-2xl">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+        <div className="md:col-span-2">
+          <motion.div
+            key={activeFeature.id}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
+            className="relative aspect-video rounded-xl overflow-hidden shadow-lg"
+          >
+            <Image
+              src={activeFeature.imageUrl}
+              alt={activeFeature.imageAlt}
+              fill
+              className="object-cover"
+            />
+          </motion.div>
         </div>
+        <div className="md:col-span-1">
+          <motion.div
+            key={activeFeature.id}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <h3 className="text-2xl font-semibold mb-2">{activeFeature.title}</h3>
+            <p className="text-gray-300 mb-6">{activeFeature.description}</p>
+          </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
-          {/* Left Column: Feature List */}
-          <div className="md:col-span-1 space-y-2">
-            {featureItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setActiveFeature(item)}
+          <div className="flex flex-col gap-3">
+            {featureItems.map((item, idx) => (
+              <button 
+                key={idx} 
+                onMouseEnter={() => setActiveFeature(item)} 
+                onFocus={() => setActiveFeature(item)} 
                 className={cn(
-                  "w-full text-left p-4 rounded-lg transition-all duration-200 ease-in-out flex items-start gap-3",
-                  activeFeature.id === item.id
-                    ? "bg-primary/10 shadow-md ring-2 ring-primary"
-                    : "hover:bg-muted/50"
+                  "text-left p-3 rounded-lg transition-all duration-200",
+                  activeFeature.id === item.id 
+                    ? "bg-white/10 ring-1 ring-white/12" 
+                    : "hover:bg-white/6"
                 )}
               >
-                <div className={cn("mt-1", activeFeature.id === item.id ? "text-primary" : "text-muted-foreground")}>
-                  {item.icon}
-                </div>
-                <div>
-                  <h4 className={cn("font-semibold mb-1", activeFeature.id === item.id ? "text-primary" : "text-foreground")}>{item.title}</h4>
-                  <p className={cn("text-sm", activeFeature.id === item.id ? "text-primary/80" : "text-muted-foreground")}>{item.description}</p>
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    "transition-colors",
+                    activeFeature.id === item.id ? "text-white" : "text-gray-400"
+                  )}>
+                    {item.icon}
+                  </div>
+                  <div>
+                    <div className="font-semibold">{item.title}</div>
+                    <div className="text-sm text-gray-300">{item.description}</div>
+                  </div>
                 </div>
               </button>
             ))}
           </div>
-
-          {/* Right Column: Active Feature Details */}
-          <div className="md:col-span-2">
-            {activeFeature && (
-              <div className="bg-card p-6 md:p-8 rounded-xl shadow-xl border border-border/70">
-                <div className="relative aspect-video rounded-lg overflow-hidden mb-6 shadow-lg">
-                  <Image
-                    src={activeFeature.imageUrl}
-                    alt={activeFeature.imageAlt}
-                    layout="fill"
-                    objectFit="cover"
-                    data-ai-hint={activeFeature.dataAiHint}
-                    className="animate-fade-in"
-                  />
-                </div>
-                <h3 className="text-2xl font-bold text-primary mb-3">{activeFeature.title}</h3>
-                <p className="text-muted-foreground mb-6 text-base leading-relaxed">{activeFeature.longDescription}</p>
-                <Button asChild variant="default" className="group">
-                  <Link href={activeFeature.learnMoreLink}>
-                    <>
-                      Learn More about {activeFeature.title}
-                      <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                    </>
-                  </Link>
-                </Button>
-              </div>
-            )}
-          </div>
         </div>
+      </div>
+    </div>
+  );
+};
+
+const DetailedFeaturesSection = () => {
+  return (
+    <section id="detailed-features" className="h-screen snap-start flex items-center justify-center px-6 bg-[#010048]">
+      <div className="max-w-6xl w-full">
+        <ImageNavFull />
       </div>
     </section>
   );

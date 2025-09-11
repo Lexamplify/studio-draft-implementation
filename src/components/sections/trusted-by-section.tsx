@@ -1,25 +1,34 @@
 
-import Image from "next/image";
+'use client';
 
-/* const logos = [
-  { name: "Legal Firm One", src: "https://placehold.co/150x60.png?text=Firm+Alpha", dataAiHint: "law firm logo" },
-  { name: "Tech Innovators Co.", src: "https://placehold.co/150x60.png?text=InnovateLLP", dataAiHint: "tech company logo" },
-  { name: "Corporate Solutions Ltd.", src: "https://placehold.co/150x60.png?text=CorpLegal+Global", dataAiHint: "corporate logo" },
-  { name: "Advocate Chambers Group", src: "https://placehold.co/150x60.png?text=Chambers+United", dataAiHint: "legal chambers logo" },
-  { name: "Justice Tech", src: "https://placehold.co/150x60.png?text=JusticeTech", dataAiHint: "legal tech logo" },
-]; */
+import { motion } from "framer-motion";
+
+const features = [
+  { title: "AI Legal Research", desc: "Auto-summarize statutes, case law and extract relevant precedent in seconds." },
+  { title: "Contract Review", desc: "Highlight risk, obligations and missing clauses with AI-powered accuracy." },
+  { title: "Compliance Insights", desc: "Get timeline-aware regulatory guidance and audit-ready reports." },
+];
 
 const TrustedBySection = () => {
   return (
-    <section id="trusted-by" className="py-16 bg-[#F9FBFD]"> 
-      <div className="container mx-auto px-6">
-        <h2 className="text-3xl md:text-4xl font-bold text-center text-primary mb-4 font-heading">
-          Why Lexamplify?
-        </h2>
-        <p className="text-center text-muted-foreground text-lg mb-12 max-w-2xl mx-auto font-body">
-          We are committed to empowering legal professionals with tools that are not just technologically advanced, but also intuitive and deeply integrated into the realities of legal practice in India.
-        </p>
-        
+    <section id="trusted-by" className="h-screen snap-start flex items-center justify-center px-6 bg-black"> 
+      <div className="max-w-6xl w-full">
+        <h2 className="text-4xl font-semibold text-center mb-12">Core Capabilities</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {features.map((f, i) => (
+            <motion.div 
+              key={i} 
+              initial={{ opacity: 0, y: 30 }} 
+              whileInView={{ opacity: 1, y: 0 }} 
+              transition={{ duration: 0.6, delay: i * 0.12 }}
+            >
+              <div className="rounded-2xl p-6 shadow-lg backdrop-blur-sm bg-opacity-10 border border-white/6 bg-[#010057]">
+                <h3 className="text-xl font-bold mb-2">{f.title}</h3>
+                <p className="text-gray-300">{f.desc}</p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
       </div>
     </section>
   );
