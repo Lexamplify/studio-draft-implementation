@@ -103,6 +103,9 @@ export default function LoginPage() {
       const accessToken = credential?.accessToken;
       if (accessToken) {
         localStorage.setItem('googleAccessToken', accessToken);
+        // Set expiry to 1 hour from now (Google tokens expire in 1 hour)
+        const expiryTime = Date.now() + (60 * 60 * 1000);
+        localStorage.setItem('googleTokenExpiry', expiryTime.toString());
         console.log("Google login successful");
       router.replace("/assistant");
 

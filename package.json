@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@clerk/nextjs": "^6.32.0",
     "@genkit-ai/googleai": "^1.8.0",
     "@genkit-ai/next": "^1.8.0",
     "@google/generative-ai": "^0.24.1",
@@ -48,6 +49,7 @@
     "firebase": "^11.8.1",
     "firebase-admin": "^13.4.0",
     "formidable": "^3.5.4",
+    "framer-motion": "^12.23.12",
     "genkit": "^1.8.0",
     "googleapis": "^150.0.1",
     "lexteam-editor": "^7.0.3",
