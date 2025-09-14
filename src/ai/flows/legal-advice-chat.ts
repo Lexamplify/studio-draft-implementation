@@ -178,7 +178,7 @@ const indianKanoonSearch = ai.defineTool(
     console.log(`[Tool] Calling /find endpoint for: "${input.query}"`);
     if (!input.query) return [];
     try {
-      const response = await fetch('http://localhost:3001/find', {
+      const response = await fetch(process.env.INDIAN_KANOON_API_URL || 'http://localhost:3001/find', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: input.query }),
@@ -1060,7 +1060,10 @@ const findCitationsForDocumentFlow = ai.defineFlow(
       let citations: Array<{title: string, url: string}> = [];
       
       // Search for the citation using Indian Kanoon API
-      const searchResults = await indianKanoonSearch.run({ query: citation.searchQuery });
+      // Temporarily disabled in production if API is not available
+      const searchResults = process.env.NODE_ENV === 'production' && !process.env.INDIAN_KANOON_API_URL 
+        ? { result: [] } 
+        : await indianKanoonSearch.run({ query: citation.searchQuery });
       
       // Handle the ActionResult type properly and limit to top 2 results
       if (searchResults && searchResults.result && Array.isArray(searchResults.result)) {
@@ -1180,6 +1183,11 @@ const legalAdviceChatFlow = ai.defineFlow(
       return { answer: finalAnswer };
     } catch (error) {
       console.error('LexAI Master Prompt Error:', error);
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
       return { 
         answer: 'I apologize, but I encountered a technical issue while processing your legal query. Please try again, and if the problem persists, consider consulting with a licensed advocate for immediate assistance.' 
       };
