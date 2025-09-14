@@ -35,9 +35,7 @@ export async function getStoredCitations(): Promise<Array<{title: string, url?: 
 export async function clearStoredCitations(): Promise<void> {
   storedCitations = [];
 }
-import { OpenAI } from 'openai';
-
-const openai = new OpenAI({apiKey: process.env.OPENAI_API_KEY});
+// Using Gemini AI through Genkit instead of OpenAI
 
 
 // Helper function to extract just the case name (removes citation numbers after comma)
@@ -68,34 +66,36 @@ Make sure the URL leads to the **correct case document** matching the title.
 Begin output:
 `;
 
-    if (!process.env.OPENAI_API_KEY) {
-      console.error('OpenAI API key is not set in environment variables');
+    if (!process.env.GOOGLE_GENAI_API_KEY) {
+      console.error('Google AI API key is not set in environment variables');
       return null;
     }
 
-    const response = await openai.chat.completions.create({
-      model: 'chatgpt-4o-latest',
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.2,
-      max_tokens: 100,
-      top_p: 1,
+    // Use Gemini AI through Genkit
+    const response = await ai.generate({
+      model: 'googleai/gemini-1.5-pro-latest',
+      prompt: prompt,
+      config: {
+        temperature: 0.2,
+        maxOutputTokens: 100,
+        topP: 1,
+      }
     });
 
-    let result = response.choices[0].message.content?.trim() || '';
+    let result = response.text?.trim() || '';
     
     // If no result, try again with the full title as fallback
     if (result === 'not found' && caseName !== title) {
       console.log(`[LLM Search] Retrying with full citation: "${title}"`);
-      const fallbackResponse = await openai.chat.completions.create({
-        model: 'gpt-3.5-turbo',
-        messages: [{
-          role: 'user',
-          content: `Find the Indian Kanoon URL for this legal case. Return ONLY the URL or 'not found': ${title}`
-        }],
-        temperature: 0.2,
-        max_tokens: 100,
+      const fallbackResponse = await ai.generate({
+        model: 'googleai/gemini-1.5-flash-latest',
+        prompt: `Find the Indian Kanoon URL for this legal case. Return ONLY the URL or 'not found': ${title}`,
+        config: {
+          temperature: 0.2,
+          maxOutputTokens: 100,
+        }
       });
-      result = fallbackResponse.choices[0].message.content?.trim() || '';
+      result = fallbackResponse.text?.trim() || '';
     }
 
     if (result.toLowerCase() === 'not found' || !result.startsWith('http')) {
@@ -1184,9 +1184,9 @@ const legalAdviceChatFlow = ai.defineFlow(
     } catch (error) {
       console.error('LexAI Master Prompt Error:', error);
       console.error('Error details:', {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        name: error instanceof Error ? error.name : 'Unknown'
       });
       return { 
         answer: 'I apologize, but I encountered a technical issue while processing your legal query. Please try again, and if the problem persists, consider consulting with a licensed advocate for immediate assistance.' 
