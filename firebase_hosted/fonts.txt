@@ -1,0 +1,170 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Lexamplify Design System - Professional Legal Tech Platform
+All colors MUST be HSL. Glassmorphic, clean, and modern.
+*/
+
+@layer base {
+  :root {
+    /* Core Brand Colors */
+    --background: 0 0% 100%;
+    --foreground: 225 39% 21%;
+    
+    /* Legal Professional Deep Blue */
+    --primary: 225 83% 25%;
+    --primary-foreground: 0 0% 100%;
+    --primary-light: 225 83% 35%;
+    --primary-dark: 225 83% 15%;
+    
+    /* Emerald Accent */
+    --accent: 158 64% 52%;
+    --accent-foreground: 0 0% 100%;
+    --accent-light: 158 64% 62%;
+    --accent-muted: 158 30% 95%;
+    
+    /* Professional Grays */
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 225 39% 21%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 215 25% 27%;
+    
+    /* Surfaces & Cards */
+    --card: 0 0% 100%;
+    --card-foreground: 225 39% 21%;
+    --surface-glass: 0 0% 100% / 0.7;
+    --surface-frosted: 220 14% 98% / 0.8;
+    
+    /* Interactive Elements */
+    --popover: 0 0% 100%;
+    --popover-foreground: 225 39% 21%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    
+    /* Borders & Inputs */
+    --border: 220 13% 91%;
+    --border-light: 220 13% 94%;
+    --input: 220 13% 91%;
+    --ring: 225 83% 25%;
+    
+    /* Gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(225 83% 25%), hsl(225 83% 35%));
+    --gradient-accent: linear-gradient(135deg, hsl(158 64% 52%), hsl(158 64% 62%));
+    --gradient-subtle: linear-gradient(180deg, hsl(220 14% 98%), hsl(0 0% 100%));
+    --gradient-glass: linear-gradient(135deg, hsl(0 0% 100% / 0.1), hsl(0 0% 100% / 0.05));
+    
+    /* Shadows & Effects */
+    --shadow-glass: 0 8px 32px hsl(225 83% 25% / 0.1);
+    --shadow-card: 0 4px 16px hsl(225 83% 25% / 0.08);
+    --shadow-elevated: 0 12px 40px hsl(225 83% 25% / 0.15);
+    
+    /* Animation & Transitions */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-spring: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    
+    /* Spacing & Layout */
+    --radius: 1rem;
+    --radius-lg: 1.5rem;
+    --radius-xl: 2rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 225 39% 11%;
+    --foreground: 0 0% 98%;
+    --card: 225 39% 11%;
+    --card-foreground: 0 0% 98%;
+    --surface-glass: 225 39% 16% / 0.7;
+    --surface-frosted: 225 39% 14% / 0.8;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', serif;
+  }
+}
+
+@layer utilities {
+  .glass-card {
+    @apply backdrop-blur-xl bg-surface-glass border border-white/20 shadow-glass;
+  }
+  
+  .frosted-surface {
+    @apply backdrop-blur-sm bg-surface-frosted;
+  }
+  
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary to-primary-light bg-clip-text text-transparent;
+  }
+  
+  .animate-fade-in {
+    animation: fadeIn 0.6s ease-out forwards;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp 0.8s ease-out forwards;
+  }
+  
+  .animate-scale-in {
+    animation: scaleIn 0.5s ease-out forwards;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
