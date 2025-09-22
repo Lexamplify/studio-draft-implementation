@@ -1,105 +1,73 @@
 
 import Image from "next/image";
-// import { Button } from "@/components/ui/button"; // Button not used
-// import Link from "next/link"; // Link not used
-// import { ArrowRight } from "lucide-react"; // ArrowRight not used
-
-interface FeatureDetail {
-  title: string;
-  description: string;
-  category: string;
-  imageUrl: string;
-  imageAlt: string;
-  dataAiHint: string;
-  // learnMoreLink: string; // Removed
-  imageLeft: boolean;
-}
-
-const features: FeatureDetail[] = [
-  {
-    title: "Tailored to Your Expertise",
-    description: "Lexamplify adapts to your specific area of law, providing relevant insights, document templates, and case law that match your unique practice needs. Stop sifting through irrelevant information and focus on what matters.",
-    category: "Personalized AI",
-    imageUrl: "https://placehold.co/800x600.png",
-    imageAlt: "Abstract representation of personalized legal AI",
-    dataAiHint: "abstract legal tech",
-    // learnMoreLink: "#", // Removed
-    imageLeft: false,
-  },
-  {
-    title: "Rapid Research, Grounded Results",
-    description: "Our AI-powered research engine scans millions of documents in seconds, delivering accurate and contextually relevant case law, statutes, and legal articles. All results are grounded in verified legal sources for maximum reliability.",
-    category: "Intelligent Search",
-    imageUrl: "https://placehold.co/800x600.png",
-    imageAlt: "Illustration of rapid legal research",
-    dataAiHint: "legal research data",
-    // learnMoreLink: "#", // Removed
-    imageLeft: true,
-  },
-  {
-    title: "Automated Document Drafting",
-    description: "Generate precise first drafts of legal documents, from notices to petitions, in minutes. Our AI understands Indian legal nuances, helping you save time and reduce errors in your drafting process.",
-    category: "Efficient Drafting",
-    imageUrl: "https://placehold.co/800x600.png",
-    imageAlt: "Visual of AI assisting with document drafting",
-    dataAiHint: "document automation AI",
-    // learnMoreLink: "#", // Removed
-    imageLeft: false,
-  },
-   {
-    title: "Strategic Case Management",
-    description: "Organize case files, track deadlines, and manage client communication effortlessly. Lexamplify provides a centralized hub for all your case-related activities, ensuring nothing falls through the cracks.",
-    category: "Organized Workflow",
-    imageUrl: "https://placehold.co/800x600.png",
-    imageAlt: "Dashboard for case management",
-    dataAiHint: "case management software",
-    // learnMoreLink: "#", // Removed
-    imageLeft: true,
-  },
-];
 
 const AlternatingFeaturesSection = () => {
   return (
-    <section id="alternating-features" className="bg-background text-foreground">
-      <div className="container mx-auto px-6 space-y-16 md:space-y-24">
-        {features.map((feature) => (
-          <div
-            key={feature.title}
-            className={`grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center ${
-              feature.imageLeft ? "md:grid-flow-row-dense" : ""
-            }`}
-          >
-            <div
-              className={`md:order-1 ${
-                feature.imageLeft ? "md:col-start-2" : ""
-              } animate-fade-in`}
-            >
-              <p className="text-primary font-semibold mb-2 uppercase tracking-wider text-sm font-body">
-                {feature.category}
-              </p>
-              <h2 className="text-3xl md:text-4xl font-bold mb-4 font-heading">
-                {feature.title}
-              </h2>
-              <p className="text-muted-foreground text-lg mb-6 font-body">
-                {feature.description}
-              </p>
-              {/* Learn More button removed */}
+    <section id="alternating-features" className="py-24 lg:py-32 bg-white">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        {/* Personalized AI */}
+        <div className="mb-32">
+          <div className="text-left mb-16">
+            <p className="text-sm font-medium text-muted-foreground tracking-wide uppercase mb-8">Personalized AI</p>
+            <div className="grid lg:grid-cols-2 gap-16 items-center">
+              <div>
+                <h2 className="font-serif text-4xl lg:text-6xl font-bold mb-8 text-foreground leading-tight">Tailored to Your Expertise</h2>
+                <p className="text-xl text-muted-foreground leading-relaxed">Lexamplify adapts to your specific area of law, providing relevant insights, document templates, and case law that match your unique practice needs. Stop sifting through irrelevant information and focus on what matters.</p>
+              </div>
+              <div className="bg-muted rounded-xl w-full flex items-center justify-center p-4">
+                <div className="relative w-full h-72 md:h-96 lg:h-[520px]">
+                  <Image src="/Images/Personalized_AI (1).png" alt="Personalized AI" fill className="object-contain rounded-xl" />
+                </div>
+              </div>
             </div>
-            {/* <div
-              className={`relative aspect-[4/3] rounded-lg overflow-hidden shadow-xl animate-fade-in animation-delay-300 ${
-                feature.imageLeft ? "md:col-start-1" : ""
-              }`}
-            >
-              <Image
-                src={feature.imageUrl}
-                alt={feature.imageAlt}
-                layout="fill"
-                objectFit="cover"
-                data-ai-hint={feature.dataAiHint}
-              />
-            </div> */}
           </div>
-        ))}
+        </div>
+
+        {/* Intelligent Search (content left, image right) */}
+        <div className="grid lg:grid-cols-2 gap-24 items-center mb-32">
+          <div>
+            <div className="bg-foreground text-white px-4 py-2 rounded-full text-sm font-medium inline-block mb-8">Intelligent Search</div>
+            <h3 className="font-serif text-3xl lg:text-4xl font-bold mb-6 text-foreground leading-tight">Rapid Research, Grounded Results</h3>
+            <p className="text-muted-foreground text-lg leading-relaxed">Our AI-powered research engine scans millions of documents in seconds, delivering accurate and contextually relevant case law, statutes, and legal articles. All results are grounded in verified legal sources for maximum reliability.</p>
+          </div>
+          <div className="bg-muted rounded-xl w-full flex items-center justify-center p-4">
+            <div className="relative w-full h-72 md:h-96 lg:h-[520px]">
+              <Image src="/Images/Intelligent_Search (1).png" alt="Intelligent Search" fill className="object-contain rounded-xl" />
+            </div>
+          </div>
+        </div>
+
+        {/* Efficient Drafting (image left, content right) */}
+        <div className="grid lg:grid-cols-2 gap-24 items-center">
+          <div className="bg-muted rounded-xl w-full flex items-center justify-center p-4">
+            <div className="relative w-full h-72 md:h-96 lg:h-[520px]">
+              <Image src="/Images/Effecient_Draft (1).png" alt="Efficient Drafting" fill className="object-contain rounded-xl" />
+            </div>
+          </div>
+          <div>
+            <div className="bg-foreground text-white px-4 py-2 rounded-full text-sm font-medium inline-block mb-8">Efficient Drafting</div>
+            <h3 className="font-serif text-3xl lg:text-4xl font-bold mb-6 text-foreground leading-tight">Automated Document Drafting</h3>
+            <p className="text-xl text-muted-foreground leading-relaxed mb-8">Generate precise first drafts of legal documents, from notices to petitions, in minutes. Our AI understands Indian legal nuances, helping you save time and reduce errors in your drafting process.</p>
+          </div>
+        </div>
+
+        {/* Organized Workflow (content left, image right) */}
+        <div className="mt-32">
+          <div className="text-left mb-16">
+            <div className="bg-foreground text-white px-4 py-2 rounded-full text-sm font-medium inline-block mb-8">Organized Workflow</div>
+            <div className="grid lg:grid-cols-2 gap-16 items-center">
+              <div>
+                <h3 className="font-serif text-3xl lg:text-4xl font-bold mb-6 text-foreground leading-tight">Strategic Case Management</h3>
+                <p className="text-xl text-muted-foreground leading-relaxed">Organize case files, track deadlines, and manage client communication effortlessly. Lexamplify provides a centralized hub for all your case-related activities, ensuring nothing falls through the cracks.</p>
+              </div>
+              <div className="bg-muted rounded-xl w-full flex items-center justify-center p-4">
+                <div className="relative w-full h-72 md:h-96 lg:h-[520px]">
+                  <Image src="/Images/Organized_Workflow (1).png" alt="Organized Workflow" fill className="object-contain rounded-xl" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   );

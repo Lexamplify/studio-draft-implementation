@@ -19,6 +19,7 @@
 
 # production
 /build
+/firebase_hosted
 
 # misc
 .DS_Store

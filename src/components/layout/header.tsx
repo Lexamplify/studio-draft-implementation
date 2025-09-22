@@ -22,29 +22,14 @@ const Header = () => {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/20 bg-white/80 backdrop-blur-lg supports-[backdrop-filter]:bg-white/60 shadow-lg">
       <div className="container flex h-20 max-w-screen-2xl items-center justify-between px-6 md:px-10 lg:px-16 xl:px-20"> {/* Increased padding */}
-        <Link href="/" className="flex items-center space-x-2" onClick={handleLinkClick}>
+        <Link href="#home" className="flex items-center space-x-2" onClick={handleLinkClick}>
           <LexamplifyLogo />
         </Link>
-        
-        {/* Navigation buttons removed as per request */}
-        {/* <nav className="hidden md:flex gap-2 items-center">
-          {navLinks.map((link, index) => (
-            <Button 
-              key={link.label} 
-              asChild 
-              variant={link.label === 'Book a Demo' ? "default" : "ghost"} 
-              size="sm" 
-              className={`${link.label === 'Book a Demo' ? "transition-all duration-300 ease-in-out hover:shadow-lg group" : "text-foreground/80 hover:text-primary"} px-4 py-2`}
-            >
-              <Link href={link.href}>
-                <>
-                  {link.icon}
-                  {link.label}
-                </>
-              </Link>
-            </Button>
-          ))}
-        </nav> */}
+
+        <nav className="hidden md:flex gap-4 items-center">
+          <Link href="/login" className="px-5 py-2 rounded-full bg-primary text-white text-sm hover:bg-primary/90 transition-colors" onClick={handleLinkClick}>Login</Link>
+          <Link href="#contact" className="text-sm text-foreground/80 hover:text-primary transition-colors" onClick={handleLinkClick}>Get in Touch</Link>
+        </nav>
 
         {/* Mobile menu can be kept for future use or removed if not needed */}
         {/* <div className="md:hidden">
