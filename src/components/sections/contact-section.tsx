@@ -6,10 +6,18 @@ const ContactSection = () => {
   return (
     <section id="contact" className="bg-background"> 
       <div className="container mx-auto px-6">
+        {/* Book a Demo Banner */}
+        <div className="mb-16 rounded-3xl bg-black text-white p-10 md:p-16 text-center">
+          <h3 className="text-4xl md:text-5xl font-heading mb-6">Book a Demo</h3>
+          <div className="mx-auto max-w-xl flex flex-col sm:flex-row items-stretch gap-3">
+            <input type="email" placeholder="name@firm.com" className="flex-1 rounded-full bg-neutral-900 border border-white/10 px-5 py-3.5 text-white placeholder-white/50 focus:outline-none" />
+            <button className="rounded-full bg-white text-black px-6 py-3.5 font-medium hover:bg-white/90 transition-colors">Submit</button>
+          </div>
+        </div>
         <div className="text-center mb-16">
-          <div className="flex justify-center mb-4 animate-fade-in">
+          {/* <div className="flex justify-center mb-4 animate-fade-in">
              <MessageSquareHeart className="h-12 w-12 text-primary" />
-           </div>
+           </div> */}
           <h2 className="text-4xl md:text-5xl font-serif font-bold text-primary animate-fade-in">
             Ready to Amplify Your Practice?
           </h2>
