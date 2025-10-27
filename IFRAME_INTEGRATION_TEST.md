@@ -3,7 +3,7 @@
 ## Quick Test Steps
 
 ### 1. Environment Setup
-Create a `.env.local` file in your project root with:
+Create a `.env.local` file in your project root with :
 ```bash
 NEXT_PUBLIC_GOOGLE_DOCS_EDITOR_URL=http://localhost:3001
 ```
