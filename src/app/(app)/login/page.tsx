@@ -37,11 +37,43 @@ export default function LoginPage() {
     setError(null);
     try {
       console.log("Attempting email login for:", email);
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
       console.log("Email login successful");
+      
+      // Store authentication info for editor access
+      if (userCredential.user) {
+        const authData = {
+          isAuthenticated: true,
+          user: {
+            email: userCredential.user.email,
+            uid: userCredential.user.uid,
+            displayName: userCredential.user.displayName
+          },
+          loginTime: Date.now(),
+          loginMethod: 'email'
+        };
+        localStorage.setItem('mainWebsiteAuth', JSON.stringify(authData));
+        console.log('✅ Main website email login success - Auth data stored for editor:', authData);
+      }
+      
       router.replace("/assistant");
     } catch (err: unknown) {
       console.error("Login error:", err);
+      
+      // Store error info for editor access
+      const errorMessage = err instanceof FirebaseError ? err.message : 
+                          err instanceof Error ? err.message : 
+                          "Login failed";
+      
+      const errorData = {
+        hasError: true,
+        errorMessage,
+        errorTime: Date.now(),
+        errorType: 'email_login'
+      };
+      localStorage.setItem('mainWebsiteAuthError', JSON.stringify(errorData));
+      console.log('❌ Main website email login failure - Error data stored for editor:', errorData);
+      
       if (err instanceof FirebaseError) {setError(err.message);
         setLoading(false);
 
@@ -63,11 +95,43 @@ export default function LoginPage() {
     setError(null);
     try {
       console.log("Attempting email signup for:", email);
-      await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       console.log("Email signup successful");
+      
+      // Store authentication info for editor access
+      if (userCredential.user) {
+        const authData = {
+          isAuthenticated: true,
+          user: {
+            email: userCredential.user.email,
+            uid: userCredential.user.uid,
+            displayName: userCredential.user.displayName
+          },
+          loginTime: Date.now(),
+          loginMethod: 'email_signup'
+        };
+        localStorage.setItem('mainWebsiteAuth', JSON.stringify(authData));
+        console.log('✅ Main website email signup success - Auth data stored for editor:', authData);
+      }
+      
       router.replace("/assistant");
     } catch (err: unknown) {
       console.error("Signup error:", err);
+      
+      // Store error info for editor access
+      const errorMessage = err instanceof FirebaseError ? err.message : 
+                          err instanceof Error ? err.message : 
+                          "Sign up failed";
+      
+      const errorData = {
+        hasError: true,
+        errorMessage,
+        errorTime: Date.now(),
+        errorType: 'email_signup'
+      };
+      localStorage.setItem('mainWebsiteAuthError', JSON.stringify(errorData));
+      console.log('❌ Main website email signup failure - Error data stored for editor:', errorData);
+      
       if (err instanceof FirebaseError) {setError(err.message);
         setLoading(false);
 
@@ -95,7 +159,7 @@ export default function LoginPage() {
       provider.setCustomParameters({
         redirect_uri: typeof window !== 'undefined' ? 
           `${window.location.origin}/login` : 
-          'http://localhost:9002/login'
+          'http://localhost:3000/login'
       });
       const result = await signInWithPopup(auth, provider);
       // Extract and store Google OAuth access token
@@ -107,8 +171,25 @@ export default function LoginPage() {
         const expiryTime = Date.now() + (60 * 60 * 1000);
         localStorage.setItem('googleTokenExpiry', expiryTime.toString());
         console.log("Google login successful");
-      router.replace("/assistant");
-
+        
+        // Store authentication info for editor access
+        if (result.user) {
+          const authData = {
+            isAuthenticated: true,
+            user: {
+              email: result.user.email,
+              uid: result.user.uid,
+              displayName: result.user.displayName
+            },
+            loginTime: Date.now(),
+            loginMethod: 'google',
+            googleAccessToken: accessToken
+          };
+          localStorage.setItem('mainWebsiteAuth', JSON.stringify(authData));
+          console.log('✅ Main website Google login success - Auth data stored for editor:', authData);
+        }
+        
+        router.replace("/assistant");
       }
       
     } catch (err: unknown) {
@@ -137,6 +218,20 @@ export default function LoginPage() {
         setError("Google login failed");
         setLoading(false);
       }
+      
+      // Store error info for editor access
+      const errorMessage = err instanceof FirebaseError ? err.message : 
+                          err instanceof Error ? err.message : 
+                          "Google login failed";
+      
+      const errorData = {
+        hasError: true,
+        errorMessage,
+        errorTime: Date.now(),
+        errorType: 'google_login'
+      };
+      localStorage.setItem('mainWebsiteAuthError', JSON.stringify(errorData));
+      console.log('❌ Main website Google login failure - Error data stored for editor:', errorData);
     }
   };
 

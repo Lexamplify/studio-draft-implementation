@@ -1,6 +1,6 @@
 "use client"
 
-// Inspired by React-hot-toast library
+// Inspired by react-hot-toast library
 import * as React from "react"
 
 import type {
@@ -145,7 +145,7 @@ type Toast = Omit<ToasterToast, "id">
 function toast({ ...props }: Toast) {
   const id = genId()
 
-  const update = (props: ToasterToast) =>
+  const update = (props: Partial<Omit<ToasterToast, 'id'>>) =>
     dispatch({
       type: "UPDATE_TOAST",
       toast: { ...props, id },

@@ -1,15 +1,18 @@
 
 'use client';
 
+import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input"; // Keep Input for potential future use if needed
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 const HeroSection = () => {
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
   
   const handleGetStarted = () => {
+    setIsLoading(true);
     router.push('/login');
   };
 
@@ -34,11 +37,19 @@ const HeroSection = () => {
             size="lg"
             className="text-lg py-3.5 px-8 transition-all duration-300 ease-in-out bg-primary text-white hover:bg-primary/90 hover:shadow-lg hover:scale-105 group font-body rounded-full"
             onClick={handleGetStarted}
+            disabled={isLoading}
           >
-            <>
-              Get Started
-              <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
-            </>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                Loading...
+              </>
+            ) : (
+              <>
+                Get Started
+                <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+              </>
+            )}
           </Button>
         </div>
       </div>

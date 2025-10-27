@@ -2,13 +2,13 @@
 import Image from "next/image";
 import { Clock, MessageSquare, Search } from "lucide-react";
 
-/* const logos = [
+const logos = [
   { name: "Legal Firm One", src: "https://placehold.co/150x60.png?text=Firm+Alpha", dataAiHint: "law firm logo" },
   { name: "Tech Innovators Co.", src: "https://placehold.co/150x60.png?text=InnovateLLP", dataAiHint: "tech company logo" },
   { name: "Corporate Solutions Ltd.", src: "https://placehold.co/150x60.png?text=CorpLegal+Global", dataAiHint: "corporate logo" },
   { name: "Advocate Chambers Group", src: "https://placehold.co/150x60.png?text=Chambers+United", dataAiHint: "legal chambers logo" },
   { name: "Justice Tech", src: "https://placehold.co/150x60.png?text=JusticeTech", dataAiHint: "legal tech logo" },
-]; */
+]; 
 
 const TrustedBySection = () => {
   return (

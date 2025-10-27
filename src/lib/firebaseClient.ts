@@ -17,8 +17,7 @@ const firebaseConfig = {
 
 // Initialize (or reuse) the Firebase app
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-console.log(process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN)
-console.log(app.options);
+
 export { app };
 export const db = getFirestore(app);
 export const storage = getStorage(app);

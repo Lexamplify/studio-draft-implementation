@@ -19,19 +19,10 @@ function getFirebasePrivateKey() {
 
 // Initialize Firebase Admin after environment variables are loaded
 function initializeFirebaseAdmin() {
-  // Force delete any existing apps to ensure clean initialization
+  // Check if Firebase is already initialized
   if (admin.apps.length > 0) {
-    console.log('[Firebase Admin] Found existing app, deleting to ensure proper configuration...');
-    console.log('[Firebase Admin] Existing app project ID:', admin.apps[0]?.options?.projectId);
-    admin.apps.forEach(app => {
-      try {
-        if (app) {
-          app.delete();
-        }
-      } catch (e) {
-        console.log('[Firebase Admin] Note: Could not delete existing app (may be expected)');
-      }
-    });
+    console.log('[Firebase Admin] Firebase already initialized, using existing app');
+    return;
   }
 
   try {
@@ -90,6 +81,15 @@ function initializeFirebaseAdmin() {
 // Call initialization immediately after dotenv loading
 initializeFirebaseAdmin();
 
+// Export Firebase services with error handling
 export const auth = admin.auth();
 export const db = admin.firestore();
-export const storage = admin.storage(); 
+export const storage = admin.storage();
+
+// Helper function to get the default app safely
+export function getFirebaseApp() {
+  if (admin.apps.length === 0) {
+    throw new Error('Firebase Admin not initialized');
+  }
+  return admin.apps[0];
+} 

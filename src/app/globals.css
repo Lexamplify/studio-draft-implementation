@@ -2,65 +2,94 @@
 @tailwind components;
 @tailwind utilities;
 
-html {
-  scroll-behavior: smooth;
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
 
 body {
-  font-family: var(--font-dm-sans), sans-serif; /* Default to DM Sans */
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-playfair-display), serif; /* Headings use Playfair Display */
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  font-weight: 600;
 }
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 225 39% 21%;
-    --primary: 225 83% 25%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 225 39% 21%;
-    --muted: 220 14% 96%;
-    --muted-foreground: 215 25% 27%;
-    --card: 0 0% 100%;
-    --card-foreground: 225 39% 21%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --accent: 158 64% 52%;
-    --accent-foreground: 0 0% 100%;
-    --ring: 225 83% 25%;
-    --radius: 1rem;
+    /* Premium Light Theme */
+    --background: 0 0% 100%; /* Pure white */
+    --foreground: 215 25% 20%; /* Dark gray for readability */
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --muted: 210 40% 96%; /* Very light gray */
+    --muted-foreground: 215 15% 45%;
+
+    --popover: 0 0% 100%; /* White */
+    --popover-foreground: 215 25% 20%;
+
+    --card: 0 0% 100%; /* White */
+    --card-foreground: 215 25% 20%;
+
+    --border: 210 20% 90%; /* Light gray border */
+    --input: 210 20% 95%; /* Very light input background */
+
+    --primary: 221 83% 53%; /* Blue-600 */
+    --primary-foreground: 0 0% 100%; /* White */
+
+    --secondary: 210 40% 96%; /* Light gray */
+    --secondary-foreground: 215 25% 20%;
+
+    --accent: 221 83% 53%; /* Blue-600 */
+    --accent-foreground: 0 0% 100%; /* White */
+
+    --destructive: 0 84% 60%; /* Red-500 */
+    --destructive-foreground: 0 0% 100%;
+
+    --ring: 221 83% 53%; /* Blue-600 for focus rings */
+
+    --radius: 0.75rem; /* Slightly more rounded */
+
+    --chart-1: 221 83% 53%;
+    --chart-2: 142 76% 36%;
+    --chart-3: 38 92% 50%;
+    --chart-4: 280 100% 70%;
+    --chart-5: 24 95% 53%;
+
+    /* Sidebar specific colors */
+    --sidebar-background: 248 250 252; /* #F8F9FA */
+    --sidebar-foreground: 31 41% 55%; /* #6B7280 */
+    --sidebar-primary: 221 83% 53%; /* Blue-600 */
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 243 244% 246%; /* #F3F4F6 */
+    --sidebar-accent-foreground: 221 83% 53%;
+    --sidebar-border: 229 231% 235%; /* #E5E7EB */
+    --sidebar-ring: 221 83% 53%;
   }
 
-  .dark {
-    --background: 225 39% 11%;
-    --foreground: 0 0% 98%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    --popover: 225 39% 11%;
-    --popover-foreground: 0 0% 98%;
-    --card: 225 39% 11%;
-    --card-foreground: 0 0% 98%;
-    --border: 217 33% 22%;
-    --input: 217 33% 22%;
-    --primary: 225 83% 25%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
-    --accent: 158 64% 52%;
-    --accent-foreground: 0 0% 100%;
-    --ring: 225 83% 25%;
+  /* Custom scrollbar styles */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #D1D5DB;
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #9CA3AF;
+  }
+
+  /* Firefox scrollbar */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #D1D5DB transparent;
   }
 }
 
