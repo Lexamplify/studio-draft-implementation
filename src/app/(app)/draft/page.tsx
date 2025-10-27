@@ -31,8 +31,8 @@ declare global {
 }
 
 const SEARCH_TEMPLATES_API_URL = process.env.NODE_ENV === 'production'
-? 'https://search-templates-k-350135218428.asia-south1.run.app/api/search-templates'
-: 'https://search-templates-k-350135218428.asia-south1.run.app/api/search-templates';
+? 'http://127.0.0.1:8000/api/search-templates'
+: 'http://127.0.0.1:8000/api/search-templates';
 
 const getEmbedConfigForDraft = (docUrl?: string): { url: string; isEditable: boolean; error?: string } => {
   if (!docUrl) {
@@ -404,6 +404,7 @@ export default function DraftPage() {
         body: JSON.stringify({ query: keywords }),
       });
       const data = await res.json();
+      console.log('handleSearch: data:', data);
       const searchResults = (data.results || []).map((item: any, index: number) => ({
         id: item.id || `${Date.now()}-${index}`,
         name: item.name || "Untitled Document.docx",
@@ -708,6 +709,8 @@ export default function DraftPage() {
   }
 
   if (editingDocUrl) {
+    console.log('editingDocUrl', editingDocUrl);
+    console.log('editingDocName', editingDocName);
     return (
       <div className="flex flex-col h-full">
         <div className="flex items-center justify-between p-2 border-b bg-muted">

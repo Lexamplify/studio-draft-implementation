@@ -80,6 +80,7 @@ const CreateCasePage: React.FC = () => {
         name: name.trim(),
         description: description.trim(),
         caseSummary: caseSummary.trim(),
+        draft: [], // Initialize draft as empty array
         metadata,
         createdAt: Timestamp.now(),
       });
