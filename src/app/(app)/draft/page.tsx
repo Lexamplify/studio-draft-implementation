@@ -193,79 +193,22 @@ export default function DraftPage() {
 
   const { user, loading: authLoading } = useFirebaseUser();
 
-  useEffect(() => {
-    if (chatScrollAreaRef.current) {
-      const viewport = chatScrollAreaRef.current.querySelector('div[data-radix-scroll-area-viewport]');
-      if (viewport) {
-        viewport.scrollTop = viewport.scrollHeight;
-      }
-    }
-  }, [chatMessages]);
+  // Get document ID from URL query parameter
+  const documentId = searchParams?.get('doc') || null;
+  const [currentDocumentId, setCurrentDocumentId] = useState<string | null>(documentId);
 
-  // Add state for editing document
-  const [editingDocUrl, setEditingDocUrl] = useState<string | null>(null);
-  const [editingDocName, setEditingDocName] = useState<string | null>(null);
-  const [isEditingLoading, setIsEditingLoading] = useState(false);
+  // handleOpenDocument function removed - no longer needed
 
-  const [pendingEditTemplate, setPendingEditTemplate] = useState<TemplateSearchResult | null>(null);
-
-  const [pickerReady, setPickerReady] = useState(false);
-
-  const [drafts, setDrafts] = useState<Draft[]>([]);
-  const [draftsLoading, setDraftsLoading] = useState(true);
-
-  // Replace the Picker loading useEffect with a more robust version
-  useEffect(() => {
-    function checkPickerReady() {
-      if (typeof window !== "undefined" && window.gapi && window.gapi.load) {
-        window.gapi.load('picker', {
-          callback: () => {
-            // Wait for window.google.picker to be available
-            const waitForPicker = setInterval(() => {
-              if (window.google && window.google.picker) {
-                setPickerReady(true);
-                clearInterval(waitForPicker);
-              }
-            }, 100);
-          }
-        });
-      } else {
-        setTimeout(checkPickerReady, 200);
-      }
-    }
-    checkPickerReady();
-  }, []);
-
-  // Update fetchDrafts to use token
-  const fetchDrafts = async () => {
-    if (tokenLoading || !token) return;
-    setDraftsLoading(true);
-    try {
-      const res = await fetch('/api/my-drafts', {
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-      });
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
-      const data = await res.json();
-      console.log('fetchDrafts: data:', data);
-      setDrafts(data.drafts || []);
-    } catch (e) {
-      console.error('Error fetching drafts:', e);
-      setDrafts([]);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load drafts. Please try again.",
-      });
-    } finally {
-      setDraftsLoading(false);
-    }
+  // Handle closing the editor
+  const handleCloseEditor = () => {
+    setCurrentDocumentId(null);
+    // Clear URL parameters
+    const url = new URL(window.location.href);
+    url.searchParams.delete('doc');
+    window.history.pushState({}, '', url.toString());
   };
 
+  // Check for document ID in URL on page load
   useEffect(() => {
     if (token) {
       fetchDrafts();
@@ -429,282 +372,14 @@ export default function DraftPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [documentId, currentDocumentId]);
 
-  const handleViewDocument = (doc: TemplateSearchResult) => {
-    setViewingDocument(doc);
-    const config = getEmbedConfigForDraft(doc.url);
-    setEmbedConfig(config);
-    setChatMessages([]);
-    if (config.error) {
-      toast({
-        variant: "default",
-        title: "Document Preview Info",
-        description: config.error,
-        duration: 5000,
-      });
-    }
-  };
-
-  const handleClosePreview = () => {
-    setViewingDocument(null);
-    setEmbedConfig(null);
-    setChatMessages([]);
-  };
-
-  const handleConceptualEdit = () => {
-    toast({
-      title: "Conceptual Action: Edit Document",
-      description: "To edit this DOCX, it would typically be uploaded to Google Docs (or a similar service) and then opened for editing. This step is conceptual for now.",
-      duration: 7000,
-    });
-  };
-
-  const handleDownloadDocument = async (docUrl?: string) => {
-    if (!docUrl) {
-      toast({ variant: "destructive", title: "Download Error", description: "No URL available for download."});
-      return;
-    }
-    if (docUrl.startsWith("https://docs.google.com/document/d/")) {
-        try {
-            const urlObj = new URL(docUrl);
-            const pathParts = urlObj.pathname.split('/');
-            const dIndex = pathParts.indexOf('d');
-            if (dIndex !== -1 && dIndex < pathParts.length - 1) {
-                const docId = pathParts[dIndex + 1];
-                window.open(`https://docs.google.com/document/d/${docId}/export?format=docx`, '_blank');
-                toast({ title: "Download Started", description: "Your DOCX download should begin shortly." });
-                return;
-            }
-        } catch (e) { console.error("Error parsing GDoc URL for download:", e); }
-    }
-    // For Firebase Storage or other URLs, get a signed URL from the backend
-    try {
-      const res = await fetch('/api/download-template', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ storageUrl: docUrl }),
-      });
-      const data = await res.json();
-      if (res.ok && data.signedUrl) {
-        window.open(data.signedUrl, '_blank');
-        toast({ title: "Download Started", description: "Your download should begin shortly." });
-      } else {
-        toast({ variant: "destructive", title: "Download Error", description: data.error || "Failed to get download link." });
-      }
-    } catch (err) {
-      toast({ variant: "destructive", title: "Download Error", description: "Failed to get download link." });
-    }
-  };
-
-  // Chat Panel Handlers
-  const handleChatSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!chatInput.trim() || isChatLoading) return;
-
-    const userMessage: ChatMessage = {
-      id: Date.now().toString(),
-      role: "user",
-      content: chatInput,
-      timestamp: new Date(),
-    };
-    setChatMessages((prev) => [...prev, userMessage]);
-    setChatInput("");
-    setIsChatLoading(true);
-
-    try {
-      const history = chatMessages.map((msg) => ({
-        role: msg.role === "assistant" ? "model" as const : "user" as const,
-        parts: [{ text: msg.content }]
-      }));
-      const aiInput: LegalAdviceChatInput = {
-        question: userMessage.content,
-        chatHistory: history.length > 0 ? history : undefined,
-      };
-      const result: LegalAdviceChatOutput = await legalAdviceChat(aiInput);
-      
-      if (result && typeof result.answer === 'string') {
-        const assistantMessage: ChatMessage = {
-          id: (Date.now() + 1).toString(),
-          role: "assistant",
-          content: result.answer,
-          timestamp: new Date(),
-        };
-        setChatMessages((prev) => [...prev, assistantMessage]);
-      } else {
-        throw new Error("Invalid AI response format");
-      }
-    } catch (error) {
-      console.error("Error getting AI chat response:", error);
-      toast({
-        variant: "destructive",
-        title: "Chat Error",
-        description: "Failed to get response from AI assistant.",
-      });
-      const errorMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: "Sorry, I encountered an error. Please try again.",
-        timestamp: new Date(),
-      };
-      setChatMessages((prev) => [...prev, errorMessage]);
-    } finally {
-      setIsChatLoading(false);
-    }
-  };
-
-  // New handler for Edit button
-  const handleEditDocument = async (template: TemplateSearchResult) => {
-    if (!template || !template.url) return;
-    
-    // Check if we have a valid Google access token
-    if (googleAccessToken) {
-      try {
-        await handleEditDocumentWithToken(template, googleAccessToken);
-        return;
-      } catch (error) {
-        console.error('Error using stored token, will try to re-authenticate:', error);
-        // Clear the invalid token and continue to login flow
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('googleAccessToken');
-        }
-        setGoogleAccessToken(null);
-      }
-    }
-    
-    // If we get here, either there was no token or it was invalid
-    setPendingEditTemplate(template);
-    login(); // This will trigger Google OAuth flow
-  };
-
-  // Handler to close the editor
-  const handleCloseEditor = () => {
-    setEditingDocUrl(null);
-    setEditingDocName(null);
-  };
-
-  if (viewingDocument && embedConfig) {
+  // Show loading state while Firebase auth is loading
+  if (authLoading) {
     return (
-      <ResizablePanelGroup direction="horizontal" className="h-full w-full max-h-[calc(100vh-var(--header-height,4rem)-2rem)]"> {/* Adjust max-h based on your header and padding */}
-        <ResizablePanel defaultSize={70} minSize={30}>
-          <div className="flex flex-col h-full">
-            <CardHeader className="p-2 border-b flex-shrink-0">
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle className="text-sm font-semibold">{viewingDocument.name}</CardTitle>
-                </div>
-                <Button variant="outline" onClick={handleClosePreview} size="sm">
-                  <Icons.Close className="mr-2 h-4 w-4" /> Close Preview
-                </Button>
-              </div>
-            </CardHeader>
-            <div className="flex-1 overflow-hidden rounded-md border-0 shadow-inner bg-muted/20 p-1">
-              {embedConfig.url.startsWith("data:text/html") ? (
-                <div className="w-full h-full flex items-center justify-center bg-background rounded-sm">
-                  <div dangerouslySetInnerHTML={{ __html: embedConfig.url.split(',')[1] || "" }} className="text-center p-4 text-destructive-foreground bg-destructive rounded-md shadow" />
-                </div>
-              ) : (
-                <iframe
-                  src={embedConfig.url}
-                  className="w-full h-full border-0 bg-background rounded-sm"
-                  title={viewingDocument.name}
-                  aria-label={`Document content for ${viewingDocument.name}`}
-                  sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
-                ></iframe>
-              )}
-            </div>
-            <CardFooter className="p-1.5 border-t flex-shrink-0 flex justify-end gap-2">
-                <Button variant="outline" size="sm" onClick={() => handleDownloadDocument(viewingDocument.url)}>
-                    <Icons.Download className="mr-2 h-4 w-4" /> Download Original
-                </Button>
-                {!embedConfig.isEditable && viewingDocument.url && !viewingDocument.url.startsWith("data:") && (
-                  <Button variant="outline" size="sm" onClick={handleConceptualEdit}>
-                    <Icons.Edit className="mr-2 h-4 w-4" /> Edit with Google Docs (Conceptual)
-                  </Button>
-                )}
-                {embedConfig.isEditable && (
-                  <Button size="sm" variant="default" disabled>
-                    <Icons.Save className="mr-2 h-4 w-4" /> Save Changes (Conceptual)
-                  </Button>
-                )}
-            </CardFooter>
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
           </div>
-        </ResizablePanel>
-        <ResizableHandle withHandle />
-        <ResizablePanel defaultSize={30} minSize={20}>
-          <div className="flex flex-col h-full border-l">
-            <div className="p-2 border-b flex items-center justify-center flex-shrink-0">
-                <Icons.Chat className="h-5 w-5 text-primary" />
-                <h3 className="ml-2 text-sm font-medium">AI Assistance</h3>
-            </div>
-
-            <ScrollArea className="flex-1 p-3" ref={chatScrollAreaRef}>
-              <div className="space-y-4 mb-4">
-                {chatMessages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={`flex items-end gap-2 ${message.role === "user" ? "justify-end" : "justify-start"}`}
-                  >
-                    {message.role === "assistant" && (
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback><Icons.Assistant className="h-5 w-5 text-primary" /></AvatarFallback>
-                      </Avatar>
-                    )}
-                    <Card className={`max-w-xs shadow-sm ${message.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
-                      <CardContent className="p-2.5">
-                        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                        <ClientFormattedTime
-                          date={message.timestamp}
-                          options={{ hour: '2-digit', minute: '2-digit' }}
-                          className="text-xs mt-1 opacity-70 text-right block"
-                        />
-                      </CardContent>
-                    </Card>
-                    {message.role === "user" && (
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback><Icons.User className="h-5 w-5" /></AvatarFallback>
-                      </Avatar>
-                    )}
-                  </div>
-                ))}
-                {isChatLoading && (
-                  <div className="flex items-end gap-2 justify-start">
-                    <Avatar className="h-8 w-8"><AvatarFallback><Icons.Assistant className="h-5 w-5 text-primary" /></AvatarFallback></Avatar>
-                    <Card className="max-w-xs shadow-sm bg-muted">
-                      <CardContent className="p-2.5"><div className="flex items-center space-x-2">
-                        <Icons.Sparkles className="h-4 w-4 animate-pulse text-primary" />
-                        <p className="text-sm text-muted-foreground">Typing...</p>
-                      </div></CardContent>
-                    </Card>
-                  </div>
-                )}
-                 {chatMessages.length === 0 && !isChatLoading && (
-                  <div className="text-center text-muted-foreground py-6">
-                    <Icons.Chat className="h-10 w-10 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">Ask the AI about this document or legal topics.</p>
-                  </div>
-                )}
-              </div>
-            </ScrollArea>
-
-            <form onSubmit={handleChatSubmit} className="flex items-center gap-2 border-t p-2 mt-auto flex-shrink-0">
-              <Input
-                type="text"
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                placeholder="Ask a general question..."
-                className="flex-1"
-                disabled={isChatLoading}
-                aria-label="Chat input for general questions"
-              />
-              <Button type="submit" disabled={isChatLoading || !chatInput.trim()} className="bg-accent hover:bg-accent/90">
-                <Icons.Send className="h-4 w-4" />
-                <span className="sr-only">Send</span>
-              </Button>
-            </form>
-          </div>
-        </ResizablePanel>
-      </ResizablePanelGroup>
     );
   }
 
@@ -712,172 +387,42 @@ export default function DraftPage() {
     console.log('editingDocUrl', editingDocUrl);
     console.log('editingDocName', editingDocName);
     return (
-      <div className="flex flex-col h-full">
-        <div className="flex items-center justify-between p-2 border-b bg-muted">
-          <span className="font-semibold text-base truncate">Editing: {editingDocName}</span>
-          <Button variant="outline" size="sm" onClick={handleCloseEditor}>
-            <Icons.Close className="mr-2 h-4 w-4" /> Close Editor
-          </Button>
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-red-600 mb-4">Authentication Required</h2>
+          <p className="text-gray-600 mb-4">Please log in to access the document editor</p>
+          <button 
+            onClick={() => router.push('/login')}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Go to Login
+          </button>
         </div>
-        <iframe
-          src={editingDocUrl}
-          className="flex-1 w-full border-0 bg-background"
-          title={editingDocName || 'Google Doc Editor'}
-          aria-label="Google Docs Editor"
-          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
-          style={{ minHeight: '80vh' }}
-        ></iframe>
       </div>
     );
   }
 
-  // This is the search interface, shown when no document is selected
+  // Show document editor if document ID is present
+  if (currentDocumentId) {
+    return (
+      <DocumentEditor 
+        documentId={currentDocumentId} 
+        onClose={handleCloseEditor}
+      />
+    );
+  }
+
+  // Show base editor by default (no document ID)
   return (
-    <div className="max-w-4xl mx-auto w-full py-8">
-      {/* My Drafts Section */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold mb-4">My Drafts</h2>
-        {draftsLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="rounded-lg bg-muted p-4 shadow animate-pulse h-32" />
-            ))}
-          </div>
-        ) : drafts.length === 0 ? (
-          <div className="text-center text-muted-foreground py-8">
-            <Icons.File className="mx-auto h-10 w-10 mb-2" />
-            <div className="text-lg font-medium">No drafts yet</div>
-            <div className="text-sm">Start by copying a template to your Drive.</div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {drafts.map((draft) => (
-              <Card key={draft.fileId} className="shadow-md hover:shadow-lg transition-shadow flex flex-col justify-between">
-                <CardHeader>
-                  <CardTitle className="truncate">{draft.fileName}</CardTitle>
-                  <CardDescription>
-                    {draft.templateType?.toUpperCase() || 'DOC'}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-xs text-muted-foreground mb-2">
-                    Last edited: {draft.updatedAt ? format(new Date(draft.updatedAt), 'PPpp') : 'Unknown'}
-                  </div>
-                  <Button
-                    variant="default"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => {
-                      setEditingDocUrl(draft.docUrl);
-                      setEditingDocName(draft.fileName);
-                    }}
-                  >
-                    Continue Editing
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
-      <div className="flex flex-col h-full p-4 sm:p-6 md:p-8">
-        <CardHeader className="px-0 pt-0 pb-4">
-          <CardTitle className="text-xl font-semibold">Find Document Templates</CardTitle>
-          <CardDescription className="text-sm">Search our library of legal draft templates. Some documents (Google Docs) can be edited directly.</CardDescription>
-        </CardHeader>
-        <form onSubmit={handleSearch} className="flex items-center gap-2 mb-6">
-          <Input
-            type="text"
-            value={keywords}
-            onChange={(e) => setKeywords(e.target.value)}
-            placeholder="Enter keywords (e.g., 'NDA', 'lease agreement')"
-            className="flex-1"
-            disabled={isLoading}
-            aria-label="Template search keywords"
-          />
-          <Button type="submit" disabled={isLoading || !keywords.trim()}>
-            {isLoading ? (
-              <Icons.Sparkles className="h-4 w-4 animate-spin mr-2" />
-            ) : (
-              <Icons.Search className="h-4 w-4 mr-2" />
-            )}
-            Search
-          </Button>
-        </form>
-
-        <ScrollArea className="flex-1">
-          {isLoading && (
-            <div className="space-y-4">
-              {[...Array(3)].map((_, i) => (
-                <Card key={i} className="shadow-sm">
-                  <CardHeader>
-                    <Skeleton className="h-6 w-3/4" />
-                    <Skeleton className="h-4 w-1/2 mt-1" />
-                  </CardHeader>
-                  <CardContent className="flex justify-between items-center">
-                    <div>
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-5/6 mt-1" />
-                    </div>
-                    <Skeleton className="h-8 w-24" />
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-
-          {!isLoading && results.length > 0 && (
-            <div className="space-y-4">
-              {results.map((template) => (
-                <Card key={template.id} className="shadow-sm hover:shadow-md transition-shadow">
-                  <CardHeader>
-                    <CardTitle className="text-lg">{template.name}</CardTitle>
-                    {template.description && (
-                      <CardDescription>{template.description}</CardDescription>
-                    )}
-                  </CardHeader>
-                  <CardContent className="flex justify-end items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={template.url ? () => handleDownloadDocument(template.url) : undefined}
-                      disabled={isEditingLoading || !template.url}
-                    >
-                      <Icons.Download className="h-4 w-4 mr-2" />
-                      Download
-                    </Button>
-                    <Button
-                      variant="default"
-                      size="sm"
-                      onClick={template.url ? () => handleEditDocument(template) : undefined}
-                      disabled={isEditingLoading || !template.url}
-                    >
-                      <Icons.Edit className="h-4 w-4 mr-2" />
-                      Edit
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-
-          {!isLoading && results.length === 0 && keywords && !viewingDocument && (
-             <div className="text-center py-10">
-              <Icons.Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">No templates found for &quot;{keywords}&quot;.</p>
-              <p className="text-sm text-muted-foreground">Try using different or more general keywords.</p>
-            </div>
-          )}
-
-           {!isLoading && results.length === 0 && !keywords && !viewingDocument && (
-             <div className="text-center py-10">
-              <Icons.Template className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">Enter keywords above to search for templates.</p>
-            </div>
-          )}
-        </ScrollArea>
+    <div className="h-screen w-full">
+      <div className="relative h-full">
+        <iframe
+          src={`${process.env.NEXT_PUBLIC_GOOGLE_DOCS_EDITOR_URL}/`}
+          className="w-full h-full border-0"
+          title="Document Editor"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+        />
       </div>
     </div>
   );
 }
-

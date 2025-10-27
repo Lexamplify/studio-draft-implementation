@@ -8,6 +8,7 @@ import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { Gavel } from 'lucide-react';
 import { Icons } from '@/components/icons';
 import { ChevronLeft } from 'lucide-react';
+import { auth } from '@/lib/firebaseClient';
 
 const locales = { 'en-US': enUS };
 const localizer = dateFnsLocalizer({ format, parse, startOfWeek, getDay, locales });
@@ -54,16 +55,61 @@ export default function CalendarPage() {
   const [view, setView] = useState<View>('month');
   const [date, setDate] = useState<Date>(new Date());
   const accessToken = typeof window !== 'undefined' ? localStorage.getItem('googleAccessToken') || '' : '';
+  const tokenExpiry = typeof window !== 'undefined' ? localStorage.getItem('googleTokenExpiry') || '' : '';
+
+  // Check if token is expired
+  const isTokenExpired = () => {
+    if (!tokenExpiry) return true;
+    return Date.now() >= parseInt(tokenExpiry);
+  };
+
+  // Get fresh token from Firebase auth
+  const getFreshToken = async () => {
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        const token = await user.getIdToken(true); // Force refresh
+        const credential = await user.getIdTokenResult();
+        if (credential.token) {
+          localStorage.setItem('googleAccessToken', credential.token);
+          // Set expiry to 1 hour from now (Google tokens expire in 1 hour)
+          const expiryTime = Date.now() + (60 * 60 * 1000);
+          localStorage.setItem('googleTokenExpiry', expiryTime.toString());
+          return credential.token;
+        }
+      }
+    } catch (error) {
+      console.error('Error refreshing token:', error);
+    }
+    return null;
+  };
 
   // Fetch events from Google Calendar
   const fetchEvents = useCallback(async () => {
     setLoading(true);
     try {
+      let currentToken = accessToken;
+      
+      // Check if token is expired and refresh if needed
+      if (isTokenExpired()) {
+        console.log('Token expired, refreshing...');
+        const freshToken = await getFreshToken();
+        if (freshToken) {
+          currentToken = freshToken;
+        } else {
+          // If we can't refresh, redirect to login
+          localStorage.removeItem('googleAccessToken');
+          localStorage.removeItem('googleTokenExpiry');
+          window.location.href = '/login';
+          return;
+        }
+      }
+
       const timeMin = new Date(new Date().setFullYear(new Date().getFullYear() - 1)).toISOString();
       const res = await axios.get(
         'https://www.googleapis.com/calendar/v3/calendars/primary/events',
         {
-          headers: { Authorization: `Bearer ${accessToken}` },
+          headers: { Authorization: `Bearer ${currentToken}` },
           params: {
             singleEvents: true,
             orderBy: 'startTime',
@@ -119,6 +165,21 @@ export default function CalendarPage() {
     e.preventDefault();
     if (!addForm.title || !addForm.start || !addForm.end) return;
     try {
+      let currentToken = accessToken;
+      
+      // Check if token is expired and refresh if needed
+      if (isTokenExpired()) {
+        console.log('Token expired, refreshing...');
+        const freshToken = await getFreshToken();
+        if (freshToken) {
+          currentToken = freshToken;
+        } else {
+          alert('Session expired. Please log in again.');
+          window.location.href = '/login';
+          return;
+        }
+      }
+
       const response = await axios.post(
         'https://www.googleapis.com/calendar/v3/calendars/primary/events',
         {
@@ -127,7 +188,7 @@ export default function CalendarPage() {
           start: { dateTime: new Date(addForm.start).toISOString() },
           end: { dateTime: new Date(addForm.end).toISOString() },
         },
-        { headers: { Authorization: `Bearer ${accessToken}` } }
+        { headers: { Authorization: `Bearer ${currentToken}` } }
       );
       // Only close modal and refresh after successful creation
       if (response.status === 200 || response.status === 201) {
@@ -146,14 +207,30 @@ export default function CalendarPage() {
   const handleDeleteEvent = async (event: CalendarEvent) => {
     if (!window.confirm('Delete this event?')) return;
     try {
+      let currentToken = accessToken;
+      
+      // Check if token is expired and refresh if needed
+      if (isTokenExpired()) {
+        console.log('Token expired, refreshing...');
+        const freshToken = await getFreshToken();
+        if (freshToken) {
+          currentToken = freshToken;
+        } else {
+          alert('Session expired. Please log in again.');
+          window.location.href = '/login';
+          return;
+        }
+      }
+
       await axios.delete(
         `https://www.googleapis.com/calendar/v3/calendars/primary/events/${event.id}`,
-        { headers: { Authorization: `Bearer ${accessToken}` } }
+        { headers: { Authorization: `Bearer ${currentToken}` } }
       );
       setSelectedEvent(null);
       fetchEvents();
     } catch (err) {
-      // handle error
+      console.error('Error deleting event:', err);
+      alert('Failed to delete event. Please try again.');
     }
   };
 

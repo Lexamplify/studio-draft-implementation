@@ -1,7 +1,8 @@
-/* 'use server';
+'use server';
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import { defineTool } from '@genkit-ai/ai';
 
 const GeneralChatInputSchema = z.object({
   question: z.string(),
@@ -34,9 +35,7 @@ export async function getStoredCitations(): Promise<Array<{title: string, url?: 
 export async function clearStoredCitations(): Promise<void> {
   storedCitations = [];
 }
-import { OpenAI } from 'openai';
-
-const openai = new OpenAI({apiKey: process.env.OPENAI_API_KEY});
+// Using Gemini AI through Genkit instead of OpenAI
 
 
 // Helper function to extract just the case name (removes citation numbers after comma)
@@ -67,34 +66,36 @@ Make sure the URL leads to the **correct case document** matching the title.
 Begin output:
 `;
 
-    if (!process.env.OPENAI_API_KEY) {
-      console.error('OpenAI API key is not set in environment variables');
+    if (!process.env.GOOGLE_GENAI_API_KEY) {
+      console.error('Google AI API key is not set in environment variables');
       return null;
     }
 
-    const response = await openai.chat.completions.create({
-      model: 'chatgpt-4o-latest',
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.2,
-      max_tokens: 100,
-      top_p: 1,
+    // Use Gemini AI through Genkit
+    const response = await ai.generate({
+      model: 'googleai/gemini-1.5-pro-latest',
+      prompt: prompt,
+      config: {
+        temperature: 0.2,
+        maxOutputTokens: 100,
+        topP: 1,
+      }
     });
 
-    let result = response.choices[0].message.content?.trim() || '';
+    let result = response.text?.trim() || '';
     
     // If no result, try again with the full title as fallback
     if (result === 'not found' && caseName !== title) {
       console.log(`[LLM Search] Retrying with full citation: "${title}"`);
-      const fallbackResponse = await openai.chat.completions.create({
-        model: 'gpt-3.5-turbo',
-        messages: [{
-          role: 'user',
-          content: `Find the Indian Kanoon URL for this legal case. Return ONLY the URL or 'not found': ${title}`
-        }],
-        temperature: 0.2,
-        max_tokens: 100,
+      const fallbackResponse = await ai.generate({
+        model: 'googleai/gemini-1.5-flash-latest',
+        prompt: `Find the Indian Kanoon URL for this legal case. Return ONLY the URL or 'not found': ${title}`,
+        config: {
+          temperature: 0.2,
+          maxOutputTokens: 100,
+        }
       });
-      result = fallbackResponse.choices[0].message.content?.trim() || '';
+      result = fallbackResponse.text?.trim() || '';
     }
 
     if (result.toLowerCase() === 'not found' || !result.startsWith('http')) {
@@ -143,6 +144,60 @@ const GeneralChatOutputSchema = z.object({
   answer: z.string().describe('The response in clean markdown format with **bold headings** and bullet points. NEVER use JSON format with curly braces or square brackets.')
 });
 export type LegalAdviceChatOutput = z.infer<typeof GeneralChatOutputSchema>;
+
+// Additional schemas for argument extraction
+const ArgumentSchema = z.object({
+  argument: z.string().describe("A concise summary of a single legal argument."),
+  searchQuery: z.string().describe("An optimized search query for this specific argument for Indian Kanoon."),
+});
+
+const ExtractedArgumentsSchema = z.object({
+  petitionerArgs: z.array(ArgumentSchema).describe("Key arguments for the petitioner/appellant."),
+  respondentArgs: z.array(ArgumentSchema).optional().describe("Key arguments for the respondent, if available in the text."),
+});
+
+// Schema for extracted citations from document
+const CitationSchema = z.object({
+  citation: z.string().describe("A specific case citation or legal reference found in the document."),
+  searchQuery: z.string().describe("An optimized search query for this specific citation for Indian Kanoon."),
+});
+
+const ExtractedCitationsSchema = z.object({
+  citations: z.array(CitationSchema).describe("Key legal citations and references found in the document."),
+});
+
+// Indian Kanoon search tool
+const indianKanoonSearch = ai.defineTool(
+  {
+    name: 'indianKanoonSearch',
+    description: 'Searches indiankanoon.org via the /find API with a query. Returns real case titles and URLs.',
+    inputSchema: z.object({ query: z.string() }),
+    outputSchema: z.array(z.object({ title: z.string(), url: z.string() })),
+  },
+  async (input) => {
+    console.log(`[Tool] Calling /find endpoint for: "${input.query}"`);
+    if (!input.query) return [];
+    try {
+      const response = await fetch(process.env.INDIAN_KANOON_API_URL || 'http://localhost:3001/find', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: input.query }),
+      });
+      if (!response.ok) {
+        console.error(`[Tool] /find API returned an error:`, response.status, await response.text());
+        return [];
+      }
+      const data = await response.json();
+      if (data && Array.isArray(data.top_results)) {
+        return data.top_results;
+      }
+      return [];
+    } catch (error) {
+      console.error(`[Tool] Network error calling /find API:`, error);
+      return [];
+    }
+  }
+);
 
 // Function to extract citation titles from text
 function extractCitationTitles(text: string): string[] {
@@ -314,17 +369,17 @@ function detectWorkflow(question: string): string {
     return 'translate';
   }
   
-  // Arguments generation keywords
+  // Arguments generation keywords - route to advanced flow
   if (q.includes('arguments') || q.includes('counter-arguments') || q.includes('case analysis') || 
       q.includes('legal position') || q.includes('pros and cons') || q.includes('favor') || 
       q.includes('against')) {
-    return 'generateArguments';
+    return 'findCitationsForArguments';
   }
   
-  // Citations keywords
+  // Citations keywords - route to advanced flow
   if (q.includes('citations') || q.includes('case law') || q.includes('precedent') || 
       q.includes('legal references') || q.includes('cite') || q.includes('judgment')) {
-    return 'generateCitations';
+    return 'findCitationsForDocument';
   }
   
   // Default to general chat
@@ -640,218 +695,108 @@ If any required input for a specific workflow is missing, ask that clarifying qu
 Answer:`,
 });
 
-// Define the flow with workflow detection
-const legalAdviceChatFlow = ai.defineFlow(
-  {
-    name: 'legalAdviceChatFlow',
-    inputSchema: GeneralChatInputSchema,
-    outputSchema: GeneralChatOutputSchema,
-  },
-  async (input: LegalAdviceChatInput): Promise<LegalAdviceChatOutput> => {
-    try {
-      console.log('[Process Flow] Starting legal advice chat flow');
-      
-      // Detect workflow from the question
-      const detectedAction = detectWorkflow(input.question);
-      
-      // Extract additional context for specific workflows
-      let targetLanguage = input.targetLanguage;
-      let caseDescription = input.caseDescription;
-      
-      // For translation workflow, try to extract target language from question
-      if (detectedAction === 'translate' && !targetLanguage) {
-        const langMatch = input.question.match(/(?:in|to|into)\s+(hindi|english|tamil|bengali|gujarati|marathi|telugu|kannada|malayalam|punjabi|urdu)/i);
-        if (langMatch) {
-          targetLanguage = langMatch[1];
-        }
-      }
-      
-      // For arguments workflow, use the question as case description if not provided
-      if (detectedAction === 'generateArguments' && !caseDescription) {
-
-        caseDescription = input.question;
-      }
-      
-      // Prepare template variables
-      const templateVars = {
-        ...input,
-        action: detectedAction,
-        targetLanguage,
-        caseDescription,
-        isSummarizeAction: detectedAction === 'summarize',
-        isTranslateAction: detectedAction === 'translate',
-        isGenerateArgumentsAction: detectedAction === 'generateArguments',
-        isGenerateCitationsAction: detectedAction === 'generateCitations',
-        isGeneralChatAction: detectedAction === 'generalChat',
-      };
-      
-      const { output } = await masterPrompt(templateVars);
-      
-      let finalAnswer = '';
-      if (typeof output === 'string') {
-        finalAnswer = output;
-      } else if (output && typeof output.answer === 'string') {
-        finalAnswer = output.answer;
-      } else {
-        return { answer: 'I apologize, but I encountered an issue processing your request. Please try rephrasing your question or contact support if the issue persists.' };
-      }
-      
-      // Post-process to convert JSON to markdown if AI still returns JSON
-      finalAnswer = await convertJsonToMarkdown(finalAnswer);
-      
-      // Process citations in the final answer
-      console.log('[Process Flow] Before processing citations:', finalAnswer);
-      finalAnswer = await processCitationsInText(finalAnswer);
-      console.log('[Process Flow] After processing citations:', finalAnswer);
-      
-      return { answer: finalAnswer };
-    } catch (error) {
-      console.error('LexAI Master Prompt Error:', error);
-      return { 
-        answer: 'I apologize, but I encountered a technical issue while processing your legal query. Please try again, and if the problem persists, consider consulting with a licensed advocate for immediate assistance.' 
-      };
-    }
-  }
-);
-
-export async function legalAdviceChat(input: LegalAdviceChatInput): Promise<LegalAdviceChatOutput> {
-  return legalAdviceChatFlow(input);
-}
-
- */
-
-'use server';
-
-import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
-// FIX: Removed unused OpenAI import for cleaner code.
-import { defineTool } from '@genkit-ai/ai'; // FIX: Removed non-existent 'AITool' from the import.
-import { Divide } from 'lucide-react';
-
-//============================================================================
-// SECTION 1: ORIGINAL CODE (PRESERVED AS REQUESTED)
-// All original schemas, helper functions, and the basic chat flow logic
-// are kept intact here.
-//============================================================================
-
-const GeneralChatInputSchema = z.object({
-  question: z.string(),
-  chatHistory: z.array(z.object({
-    role: z.enum(['user', 'model']),
-    parts: z.array(z.object({ text: z.string() }))
-  })).optional(),
-  document: z.string().optional(),
-  documentName: z.string().optional(),
-  targetLanguage: z.string().optional(),
-  caseDescription: z.string().optional(),
-});
-export type LegalAdviceChatInput = z.infer<typeof GeneralChatInputSchema>;
-
-const GeneralChatOutputSchema = z.object({
-  answer: z.string().describe('The response in clean markdown format.')
-});
-export type LegalAdviceChatOutput = z.infer<typeof GeneralChatOutputSchema>;
-
-// ... (All your other original functions like getStoredCitations, addCitation, etc., are preserved here) ...
-
-function detectWorkflow(question: string): string {
-  const q = question.toLowerCase();
-  
-  // MODIFIED: This now routes to the new, more powerful workflow.
-  if (q.includes('arguments') || q.includes('counter-arguments') || q.includes('citations') || q.includes('case law')) {
-    return 'findCitationsForArguments';
-  }
-  if (q.includes('summarize') || q.includes('summary')) {
-    return 'summarize';
-  }
-  if (q.includes('translate') || q.includes('convert to')) {
-    return 'translate';
-  }
-  return 'generalChat';
-}
-
-//============================================================================
-// SECTION 2: ARGUMENT-AWARE CITATION FINDER (NEW TOOL)
-// This new section contains the logic for the advanced workflow.
-//============================================================================
-
-/**
- * Tool to search Indian Kanoon. This remains the same.
- */
-const indianKanoonSearch = ai.defineTool(
-  {
-    name: 'indianKanoonSearch',
-    description: 'Searches indiankanoon.org via the /find API with a query. Returns real case titles and URLs.',
-    inputSchema: z.object({ query: z.string() }),
-    outputSchema: z.array(z.object({ title: z.string(), url: z.string() })),
-  },
-  async (input) => {
-    console.log(`[Tool] Calling /find endpoint for: "${input.query}"`);
-    if (!input.query) return [];
-    try {
-      const response = await fetch('http://localhost:3001/find', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: input.query }),
-      });
-      if (!response.ok) {
-        console.error(`[Tool] /find API returned an error:`, response.status, await response.text());
-        return [];
-      }
-      const data = await response.json();
-      if (data && Array.isArray(data.top_results)) {
-        return data.top_results;
-      }
-      return [];
-    } catch (error) {
-      console.error(`[Tool] Network error calling /find API:`, error);
-      return [];
-    }
-  }
-);
-
-
-/**
- * Zod schema to define the structure of an extracted legal argument.
- */
-const ArgumentSchema = z.object({
-  argument: z.string().describe("A concise summary of a single legal argument."),
-  searchQuery: z.string().describe("An optimized search query for this specific argument for Indian Kanoon."),
-});
-
-/**
- * Zod schema for the complete set of extracted arguments from a document.
- * FIX: Made respondentArgs optional to handle one-sided documents like SLPs.
- */
-const ExtractedArgumentsSchema = z.object({
-  petitionerArgs: z.array(ArgumentSchema).describe("Key arguments for the petitioner/appellant."),
-  respondentArgs: z.array(ArgumentSchema).optional().describe("Key arguments for the respondent, if available in the text."),
-});
-
-/**
- * New prompt to extract arguments and create targeted search queries.
- */
+// Argument extraction prompt
 const argumentExtractorPrompt = ai.definePrompt({
     name: 'argumentExtractor',
     input: { schema: z.string().describe("The full text of a legal document like an SLP.") },
     output: { schema: ExtractedArgumentsSchema },
-    // FIX: Updated prompt to handle cases where respondent arguments might be missing.
-    prompt: `You are an expert legal analyst. Your task is to read the provided legal document and deconstruct it into its core components.
+    prompt: `You are an expert legal analyst. Extract arguments from the legal document and return ONLY valid JSON.
 
-    1.  Identify the key arguments presented for the **Petitioner/Appellant**.
-    2.  Identify the key arguments presented for the **Respondent/State**. These may be inferred from the lower court's reasoning that is being challenged. If no clear respondent arguments are present, you may leave that field empty.
-    3.  For EACH argument, formulate a concise, powerful search query (5-10 words) that can be used to find relevant case law on Indian Kanoon for that specific point.
+CRITICAL: You must return ONLY a valid JSON object in this exact format. Do not include any explanatory text, analysis, or additional content.
 
-    Analyze the following document text and return your findings ONLY in the specified JSON format.
+Required JSON format:
+{
+  "petitionerArgs": [
+    {
+      "argument": "Specific legal argument for petitioner",
+      "searchQuery": "5-10 word search query for Indian Kanoon"
+    }
+  ],
+  "respondentArgs": [
+    {
+      "argument": "Specific legal argument for respondent", 
+      "searchQuery": "5-10 word search query for Indian Kanoon"
+    }
+  ]
+}
 
-    Document Text:
-    {{{input}}}
+Instructions:
+1. Extract 2-4 key arguments for the petitioner/appellant
+2. Extract 2-4 key arguments for the respondent (if present in document)
+3. Each argument should be 1-2 sentences maximum
+4. Each search query should be 5-10 words optimized for case law search
+5. If no respondent arguments found, use empty array: "respondentArgs": []
+
+Document Text:
+{{{input}}}
+
+JSON Response:`,
+});
+
+// Citation extraction prompt
+const citationExtractorPrompt = ai.definePrompt({
+    name: 'citationExtractor',
+    input: { schema: z.string().describe("The full text of a legal document like an SLP.") },
+    output: { schema: ExtractedCitationsSchema },
+    prompt: `You are an expert legal analyst. Extract legal citations and references from the legal document and return ONLY valid JSON.
+
+CRITICAL: You must return ONLY a valid JSON object in this exact format. Do not include any explanatory text, analysis, or additional content.
+
+Required JSON format:
+{
+  "citations": [
+    {
+      "citation": "Specific case citation or legal reference found in document",
+      "searchQuery": "5-10 word search query for Indian Kanoon"
+    }
+  ]
+}
+
+Instructions:
+1. Extract 3-6 key legal citations, case names, or legal references from the document
+2. Each citation should be the exact text as it appears in the document
+3. Each search query should be 5-10 words optimized for case law search
+4. Focus on landmark cases, important legal precedents, and statutory references
+5. Include both case names and any citation numbers if present
+
+Document Text:
+{{{input}}}
+
+JSON Response:`,
+});
+
+// Citation synthesis prompt
+const citationSynthesizerPrompt = ai.definePrompt({
+    name: 'citationSynthesizer',
+    input: { schema: z.any() },
+    output: { schema: GeneralChatOutputSchema },
+    prompt: `You are LexAI, a specialized legal assistant. You have analyzed a user's document and conducted targeted research for each legal citation found.
+
+    Your task is to synthesize this information into a comprehensive, well-formatted response.
+
+    **User's Original Request:** "{{question}}"
+
+    ---
+    **Legal Citations Found in Document:**
+    {{#each citationResults}}
+    - **Citation:** {{this.citation}}
+      - **Top 2 Relevant Cases Found:**
+        {{#if this.citations.length}}
+          {{#each this.citations}}
+          - <a href="{{this.url}}" target="_blank" rel="noopener noreferrer">{{this.title}}</a>
+          {{/each}}
+        {{else}}
+          - No specific case law was found for this citation.
+        {{/if}}
+    {{/each}}
+    ---
+
+    Now, generate the final answer in clean, professional markdown with HTML for links.
+    Answer:
     `,
 });
 
-/**
- * New prompt to synthesize the final answer.
- */
+// Argument synthesis prompt
 const argumentSynthesizerPrompt = ai.definePrompt({
     name: 'argumentSynthesizer',
     input: { schema: z.any() },
@@ -899,9 +844,7 @@ const argumentSynthesizerPrompt = ai.definePrompt({
     `,
 });
 
-/**
- * The new, advanced flow that orchestrates the entire process.
- */
+// Advanced argument generation flow
 const findCitationsForArgumentsFlow = ai.defineFlow(
   {
     name: 'findCitationsForArgumentsFlow',
@@ -912,13 +855,18 @@ const findCitationsForArgumentsFlow = ai.defineFlow(
     console.log('[Flow: Argument-Aware] Starting advanced citation search.');
 
     // Step 1: Extract structured arguments and targeted search queries from the document.
-    // FIX: Explicitly use a powerful model for this complex extraction task.
     const extractionResponse = await argumentExtractorPrompt(
       input.document || input.question,
       {
         model: 'googleai/gemini-1.5-pro-latest',
       }
     );
+    
+    // DEBUG: Log the raw response
+    console.log('======== RAW EXTRACTION RESPONSE ========');
+    console.log('Raw response:', JSON.stringify(extractionResponse, null, 2));
+    console.log('=========================================');
+    
     const extractedData = extractionResponse.output;
 
     // ADDED CONSOLE LOG
@@ -926,6 +874,11 @@ const findCitationsForArgumentsFlow = ai.defineFlow(
     console.log(JSON.stringify(extractedData, null, 2));
     console.log('=============================================');
 
+    // Validate the extracted data
+    if (!extractedData || !extractedData.petitionerArgs) {
+      console.error('Invalid extraction response:', extractedData);
+      throw new Error("Failed to extract arguments from the document. Model returned invalid format.");
+    }
 
     if (!extractedData) {
       throw new Error("Failed to extract arguments from the document.");
@@ -1051,7 +1004,6 @@ const findCitationsForArgumentsFlow = ai.defineFlow(
     console.log('Respondent Results:', JSON.stringify(respondentResults, null, 2));
     console.log('============================================');
 
-
     // Step 3: Synthesize the final, formatted answer.
     const finalResponse = await argumentSynthesizerPrompt({
         question: input.question,
@@ -1063,11 +1015,93 @@ const findCitationsForArgumentsFlow = ai.defineFlow(
   }
 );
 
+// Advanced citation generation flow
+const findCitationsForDocumentFlow = ai.defineFlow(
+  {
+    name: 'findCitationsForDocumentFlow',
+    inputSchema: GeneralChatInputSchema,
+    outputSchema: GeneralChatOutputSchema,
+  },
+  async (input) => {
+    console.log('[Flow: Citation-Aware] Starting advanced citation search.');
 
-//============================================================================
-// SECTION 3: MAIN CHAT FLOW (MODIFIED TO ROUTE TO THE NEW TOOL)
-//============================================================================
+    // Step 1: Extract structured citations from the document.
+    const extractionResponse = await citationExtractorPrompt(
+      input.document || input.question,
+      {
+        model: 'googleai/gemini-1.5-pro-latest',
+      }
+    );
+    
+    // DEBUG: Log the raw response
+    console.log('======== RAW CITATION EXTRACTION RESPONSE ========');
+    console.log('Raw response:', JSON.stringify(extractionResponse, null, 2));
+    console.log('===============================================');
+    
+    const extractedData = extractionResponse.output;
 
+    // ADDED CONSOLE LOG
+    console.log('======== EXTRACTED CITATIONS & QUERIES ========');
+    console.log(JSON.stringify(extractedData, null, 2));
+    console.log('=============================================');
+
+    // Validate the extracted data
+    if (!extractedData || !extractedData.citations) {
+      console.error('Invalid extraction response:', extractedData);
+      throw new Error("Failed to extract citations from the document. Model returned invalid format.");
+    }
+
+    if (!extractedData) {
+      throw new Error("Failed to extract citations from the document.");
+    }
+
+    // Step 2: Search for citations for each extracted citation (limit to top 2 results)
+    const citationSearchTasks = extractedData.citations.map(async (citation: { citation: string; searchQuery: string }) => {
+      let citations: Array<{title: string, url: string}> = [];
+      
+      // Search for the citation using Indian Kanoon API
+      // Temporarily disabled in production if API is not available
+      const searchResults = process.env.NODE_ENV === 'production' && !process.env.INDIAN_KANOON_API_URL 
+        ? { result: [] } 
+        : await indianKanoonSearch.run({ query: citation.searchQuery });
+      
+      // Handle the ActionResult type properly and limit to top 2 results
+      if (searchResults && searchResults.result && Array.isArray(searchResults.result)) {
+        citations = searchResults.result
+          .slice(0, 2) // Limit to top 2 results
+          .map((result: { title: string; url: string }) => ({
+            title: result.title,
+            url: result.url
+          }));
+      }
+
+      console.log(`\n[SEARCH RESULT for Citation]: "${citation.citation}"`);
+      console.log(`Found ${citations.length} results:`, JSON.stringify(citations, null, 2));
+      
+      return {
+        citation: citation.citation,
+        citations: citations,
+      };
+    });
+
+    const citationResults = await Promise.all(citationSearchTasks);
+    
+    // ADDED CONSOLE LOG
+    console.log('\n======== FINAL CITATION DATA FOR SYNTHESIZER ========');
+    console.log('Citation Results:', JSON.stringify(citationResults, null, 2));
+    console.log('==================================================');
+
+    // Step 3: Synthesize the final, formatted answer.
+    const finalResponse = await citationSynthesizerPrompt({
+        question: input.question,
+        citationResults,
+    });
+
+    return finalResponse.output || { answer: "Could not synthesize the final citations." };
+  }
+);
+
+// Define the flow with workflow detection
 const legalAdviceChatFlow = ai.defineFlow(
   {
     name: 'legalAdviceChatFlow',
@@ -1076,8 +1110,11 @@ const legalAdviceChatFlow = ai.defineFlow(
   },
   async (input: LegalAdviceChatInput): Promise<LegalAdviceChatOutput> => {
     try {
+      console.log('[Process Flow] Starting legal advice chat flow');
+      
+      // Detect workflow from the question
       const detectedAction = detectWorkflow(input.question);
-
+      
       // ROUTING LOGIC: If the intent is to find arguments or citations,
       // use the new, more powerful flow.
       if (detectedAction === 'findCitationsForArguments') {
@@ -1087,36 +1124,72 @@ const legalAdviceChatFlow = ai.defineFlow(
         return await findCitationsForArgumentsFlow(input);
       }
 
-      // ... (The rest of your original flow logic for summarize, translate,
-      // and generalChat remains here, unchanged.)
-
-      // Fallback for other actions
+      if (detectedAction === 'findCitationsForDocument') {
+        if (!input.document) {
+          return { answer: "Please upload a document first to find relevant citations." };
+        }
+        return await findCitationsForDocumentFlow(input);
+      }
+      
+      // Extract additional context for specific workflows
+      let targetLanguage = input.targetLanguage;
+      let caseDescription = input.caseDescription;
+      
+      // For translation workflow, try to extract target language from question
+      if (detectedAction === 'translate' && !targetLanguage) {
+        const langMatch = input.question.match(/(?:in|to|into)\s+(hindi|english|tamil|bengali|gujarati|marathi|telugu|kannada|malayalam|punjabi|urdu)/i);
+        if (langMatch) {
+          targetLanguage = langMatch[1];
+        }
+      }
+      
+      // For arguments workflow, use the question as case description if not provided
+      if (detectedAction === 'generateArguments' && !caseDescription) {
+        caseDescription = input.question;
+      }
+      
+      // Prepare template variables
       const templateVars = {
         ...input,
         action: detectedAction,
+        targetLanguage,
+        caseDescription,
         isSummarizeAction: detectedAction === 'summarize',
         isTranslateAction: detectedAction === 'translate',
+        isGenerateArgumentsAction: detectedAction === 'generateArguments',
+        isGenerateCitationsAction: detectedAction === 'generateCitations',
         isGeneralChatAction: detectedAction === 'generalChat',
       };
       
-      // Using a simplified master prompt for other tasks.
-      const simpleMasterPrompt = ai.definePrompt({
-        name: 'simpleMasterPrompt',
-        input: { schema: z.any() },
-        output: { schema: GeneralChatOutputSchema },
-        prompt: `You are LexAI. Answer the user's question based on the provided context.
-        Context: {{{document}}}
-        Question: {{{question}}}
-        Answer:`
-      });
-
-      const { output } = await simpleMasterPrompt(templateVars);
-      return output || { answer: "I'm sorry, I couldn't process that request." };
-
+      const { output } = await masterPrompt(templateVars);
+      
+      let finalAnswer = '';
+      if (typeof output === 'string') {
+        finalAnswer = output;
+      } else if (output && typeof output.answer === 'string') {
+        finalAnswer = output.answer;
+      } else {
+        return { answer: 'I apologize, but I encountered an issue processing your request. Please try rephrasing your question or contact support if the issue persists.' };
+      }
+      
+      // Post-process to convert JSON to markdown if AI still returns JSON
+      finalAnswer = await convertJsonToMarkdown(finalAnswer);
+      
+      // Process citations in the final answer
+      console.log('[Process Flow] Before processing citations:', finalAnswer);
+      finalAnswer = await processCitationsInText(finalAnswer);
+      console.log('[Process Flow] After processing citations:', finalAnswer);
+      
+      return { answer: finalAnswer };
     } catch (error) {
-      console.error('LexAI Master Flow Error:', error);
+      console.error('LexAI Master Prompt Error:', error);
+      console.error('Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        name: error instanceof Error ? error.name : 'Unknown'
+      });
       return { 
-        answer: 'I apologize, but I encountered a technical issue. Please try again.' 
+        answer: 'I apologize, but I encountered a technical issue while processing your legal query. Please try again, and if the problem persists, consider consulting with a licensed advocate for immediate assistance.' 
       };
     }
   }
