@@ -10,7 +10,7 @@ NEXT_PUBLIC_GOOGLE_DOCS_EDITOR_URL=http://localhost:3001
 
 ### 2. Start Your Applications
 
-**Main Application** (this project) :
+**Main Application** (this project):
 ```bash
 npm run dev
 # Should run on http://localhost:3000
