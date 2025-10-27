@@ -8,15 +8,15 @@ const AlternatingFeaturesSection = () => {
         {/* Personalized AI */}
         <div className="mb-32">
           <div className="text-left mb-16">
-            <p className="text-sm font-medium text-muted-foreground tracking-wide uppercase mb-8">Personalized AI</p>
+            <p className="text-sm font-medium text-muted-foreground tracking-wide uppercase mb-8">AI Assistant</p>
             <div className="grid lg:grid-cols-2 gap-16 items-center">
               <div>
-                <h2 className="font-serif text-4xl lg:text-6xl font-bold mb-8 text-foreground leading-tight">Tailored to Your Expertise</h2>
-                <p className="text-xl text-muted-foreground leading-relaxed">Lexamplify adapts to your specific area of law, providing relevant insights, document templates, and case law that match your unique practice needs. Stop sifting through irrelevant information and focus on what matters.</p>
+                <h2 className="font-serif text-4xl lg:text-6xl font-bold mb-8 text-foreground leading-tight">Your Legal AI Companion</h2>
+                <p className="text-xl text-muted-foreground leading-relaxed">Chat with an intelligent AI assistant trained on Indian law. Get instant answers to legal queries, case law summaries, document analysis, and strategic advice. Your AI partner is available 24/7 to support your practice.</p>
               </div>
               <div className="bg-muted rounded-xl w-full flex items-center justify-center p-4">
                 <div className="relative w-full h-72 md:h-96 lg:h-[520px]">
-                  <Image src="/Images/Personalized_AI (1).png" alt="Personalized AI" fill className="object-contain rounded-xl" />
+                  <Image src="/Assistant_mockup.png" alt="AI Legal Assistant" fill className="object-contain rounded-xl" />
                 </div>
               </div>
             </div>
