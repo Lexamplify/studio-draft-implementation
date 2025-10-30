@@ -10,8 +10,13 @@ export async function GET(request: NextRequest) {
     let query = db.collection('events')
       .where('userId', '==', userId);
 
-    if (caseId) {
+    // If caseId is provided and not empty/null, only get events for that specific case
+    // If caseId is not provided, get only general workspace events (where caseId is null)
+    if (caseId && caseId !== 'null' && caseId !== 'undefined' && caseId.trim() !== '') {
       query = query.where('caseId', '==', caseId);
+    } else {
+      // When no caseId is provided, only get general workspace events (where caseId is null)
+      query = query.where('caseId', '==', null);
     }
 
     const snapshot = await query.get();

@@ -25,10 +25,10 @@ const Header = () => {
           <LexamplifyLogo />
         </Link>
 
-        <nav className="hidden md:flex items-center gap-6">
+        <nav className="hidden md:flex gap-4 items-center">
           <Link 
             href="/login" 
-            className={`px-5 py-2.5 rounded-full bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors inline-flex items-center justify-center gap-2 min-w-[80px] ${isLoginLoading ? 'opacity-75 cursor-not-allowed' : ''}`} 
+            className={`px-5 py-2 rounded-full bg-primary text-white text-sm hover:bg-primary/90 transition-colors flex items-center gap-2 ${isLoginLoading ? 'opacity-75 cursor-not-allowed' : ''}`} 
             onClick={(e) => {
               handleLoginClick();
               handleLinkClick();
@@ -37,13 +37,7 @@ const Header = () => {
             {isLoginLoading && <Loader2 className="h-4 w-4 animate-spin" />}
             Login
           </Link>
-          <Link 
-            href="#contact" 
-            className="text-sm text-foreground/80 hover:text-primary transition-colors py-2" 
-            onClick={handleLinkClick}
-          >
-            Get in Touch
-          </Link>
+          <Link href="#contact" className="text-sm text-foreground/80 hover:text-primary transition-colors" onClick={handleLinkClick}>Get in Touch</Link>
         </nav>
 
         {/* Mobile menu can be kept for future use or removed if not needed */}

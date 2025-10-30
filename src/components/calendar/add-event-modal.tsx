@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import type { CalendarEvent } from '@/types/backend';
-import { useCasesContext } from '@/context/cases-context';
+import { useCases } from '@/context/cases-context';
 import { useCalendarEvents } from '@/hooks/use-calendar-events';
 import {
   Dialog,
@@ -33,7 +33,7 @@ interface AddEventModalProps {
 
 export function AddEventModal({ open, onClose, initialDate, initialCaseId }: AddEventModalProps) {
   const { createEvent } = useCalendarEvents();
-  const { cases } = useCasesContext();
+  const { cases } = useCases();
   
   const [formData, setFormData] = useState({
     title: '',
@@ -273,5 +273,6 @@ export function AddEventModal({ open, onClose, initialDate, initialCaseId }: Add
 }
 
 export default AddEventModal;
+
 
 

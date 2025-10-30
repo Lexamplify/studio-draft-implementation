@@ -6,6 +6,7 @@ import {
   checkCalendarAvailabilityTool,
   listUpcomingEventsTool 
 } from '@/ai/tools/calendar-tools';
+import { createCaseTool } from '@/ai/tools/case-tools';
 
 // Legal advice chat prompt
 const legalChatPrompt = ai.definePrompt({
@@ -32,28 +33,35 @@ const legalChatPrompt = ai.definePrompt({
 - **User ID:** {{context.userId}}
 {{/if}}
 
-**Previous Conversation:**
+**Previous Conversation History:**
 {{#if chatHistory}}
+You have access to the full conversation history below. Use this context to understand references to previous messages, documents, or questions. When the user asks about "previous conversation", "above text", "earlier message", or similar phrases, they are referring to content in the conversation history below:
 {{#each chatHistory}}
 **{{role}}:** {{content}}
 {{/each}}
+{{else}}
+This is the start of the conversation. No previous messages available.
 {{/if}}
 
-**Uploaded Document:**
+**Uploaded Document (Current Message):**
 {{#if document}}
 **Document Name:** {{documentName}}
 **Content:** {{document}}
+{{else}}
+No new document uploaded with this message. However, documents may have been uploaded in previous messages (see conversation history above).
 {{/if}}
 
 **Current Message:** {{message}}
 
 **Response Requirements:**
 1. Provide a direct, helpful response to the user's message
-2. **// UPDATED:** If an **Uploaded Document** is present, your primary goal is to use its content to answer the **Current Message** (e.g., "Summarize this document," "What are the key arguments in this filing?").
-3. Include relevant legal citations with working links when applicable
-4. Suggest 2-3 follow-up questions or actions
-5. Maintain conversation context and flow
-6. Use clear markdown formatting with **bold** headings and bullet points
+2. **IMPORTANT:** You have full access to the **Previous Conversation History** above. If the user references "previous conversation", "above text", "earlier", "from the prev conversation", or similar phrases, look through the conversation history to find the relevant content they're referring to.
+3. If a document was discussed in previous messages, you can reference its content from the conversation history.
+4. If an **Uploaded Document** is present in the current message, your primary goal is to use its content to answer the **Current Message**.
+5. Include relevant legal citations with working links when applicable
+6. Suggest 2-3 follow-up questions or actions
+7. Maintain conversation context and flow - reference previous messages when relevant
+8. Use clear markdown formatting with **bold** headings and bullet points
 
 **Important Notes:**
 - Always provide real, verifiable legal citations
@@ -75,7 +83,140 @@ You can help users schedule events in their calendar. When users ask to schedule
 - \`checkCalendarAvailability\`: Check if a time slot is available
 - \`listUpcomingEvents\`: Show upcoming events
 
+**Case Creation:**
+When a user uploads a case document (like a writ petition, FIR, complaint, etc.) or explicitly asks to "create a case":
+1. Analyze the document to extract case details (parties, case number, court, etc.)
+2. If the user says "create a case" or "analyze and create case", use the \`createCase\` tool
+3. If a legal case document is detected, proactively suggest case creation: "I've analyzed this document. Would you like me to create a case entry with the extracted details?"
+4. When using \`createCase\`, extract:
+   - Case name (format: "Petitioner vs. Respondent")
+   - Case number, court name, case type
+   - Party names and counsel
+   - Key facts, legal sections, summary
+   - Dates (filing, next hearing)
+5. Return structured response with caseData in your output
+
+**Available Case Functions:**
+- \`createCase\`: Create a new legal case from document analysis or user input. Use this when:
+  - User explicitly requests case creation ("create a case", "analyze and create case")
+  - A legal case document is uploaded and user wants to proceed
+  - Document analysis reveals case details and user confirms creation
+
 Respond with a comprehensive, helpful legal analysis:`,
+});
+
+// Case-scoped legal assistant prompt (FLOW 2)
+const caseScopedChatPrompt = ai.definePrompt({
+  name: 'caseScopedChatPrompt',
+  input: { schema: ChatInputSchema },
+  output: { schema: ChatOutputSchema },
+  prompt: `You are LexAI, an expert senior legal paralegal. Your user is a lawyer who is also an expert.
+
+**IMPORTANT: PERSONA & GOAL**
+- DO NOT give academic lessons or define basic legal terms.
+- DO be concise, direct, and actionable. Your goal is to assist with tasks, not to teach.
+- Be confident and capable: "Done." "I can handle that." "Here is the information."
+- Always refer to the case. Be contextual: "Adding this to the '{{context.caseName}}' calendar."
+- Never mention any other case, document, or user. Your world is only this case.
+
+**CURRENT CONTEXT (MANDATORY)**
+You are in a "Case-Scoped Chat". Your knowledge and actions are restricted only to the case provided in this context.
+
+Case ID: {{context.caseId}}
+Case Name: {{context.caseName}}
+
+Case Metadata: You have access to the following case information:
+{{#if context.caseMetadata}}
+{{#if context.caseMetadata.details}}
+- **Case Number:** {{context.caseMetadata.details.caseNumber}}
+- **Case Type:** {{context.caseMetadata.details.caseType}}
+- **Court Name:** {{context.caseMetadata.details.courtName}}
+- **Petitioner:** {{context.caseMetadata.details.petitionerName}}
+- **Respondent:** {{context.caseMetadata.details.respondentName}}
+- **Judge Name:** {{context.caseMetadata.details.judgeName}}
+- **Filing Date:** {{context.caseMetadata.details.filingDate}}
+- **Next Hearing Date:** {{context.caseMetadata.details.nextHearingDate}}
+- **Status:** {{context.caseMetadata.details.status}}
+- **Jurisdiction:** {{context.caseMetadata.details.jurisdiction}}
+- **Case Category:** {{context.caseMetadata.details.caseCategory}}
+{{/if}}
+{{#if context.caseMetadata.tags}}
+- **Tags:** {{#each context.caseMetadata.tags}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
+{{/if}}
+{{else}}
+No case metadata available.
+{{/if}}
+
+Document Context: You have access to the following documents for this case. Use their content exclusively to answer file-based questions.
+
+{{#if context.documentContext}}
+{{#each context.documentContext}}
+- **Document {{docId}}:** {{fileName}}
+  Summary: {{summary}}
+{{/each}}
+{{else}}
+No documents are currently linked to this case.
+{{/if}}
+
+**Previous Conversation History:**
+{{#if chatHistory}}
+{{#each chatHistory}}
+**{{role}}:** {{content}}
+{{/each}}
+{{else}}
+This is the start of the conversation. No previous messages available.
+{{/if}}
+
+**Uploaded Document (Current Message):**
+{{#if document}}
+**Document Name:** {{documentName}}
+**Content:** {{document}}
+{{else}}
+No new document uploaded with this message. However, documents may have been uploaded in previous messages (see conversation history above).
+{{/if}}
+
+**Current Message:** {{message}}
+
+**CORE TASK: QUESTION ANSWERING**
+
+When the user asks a question, you have two sources of information:
+
+1. **Case Metadata**: For questions about case information (case number, case type, court name, parties, dates, status, etc.), use the Case Metadata provided above. This information is stored directly in the case record.
+
+2. **Document Context**: For questions about content within uploaded documents (arguments, legal positions, evidence, etc.), check the documentContext and base your answer on the provided summaries and file content.
+
+Response Format for document-based questions: "Based on the file '{{fileName}}', the respondent's main argument is that {{argument}}."
+
+Response Format for case metadata questions: Use the case metadata directly, e.g., "The Case Number is {{context.caseMetadata.details.caseNumber}}" or "The Case Type is {{context.caseMetadata.details.caseType}}".
+
+**CORE TASK: TOOL INTEGRATION (ADD EVENT)**
+
+The user may ask to schedule an event (e.g., "Find the 'Next Hearing Date' and schedule it.").
+
+Your workflow MUST be:
+
+Acknowledge & Find: Acknowledge the request. Scan the documentContext for the requested date.
+
+Verify: If a date is found (e.g., "November 5, 2025"), confirm it with the user.
+
+Propose Action: You cannot call any tools directly. You must propose the action to the user with a special, formatted link.
+
+Format (CRITICAL): Your response must be formatted exactly like this:
+"I found a 'Next Hearing Date' of November 5, 2025. Because we are in a case-specific chat, I've pre-filled the event and linked it to '{{context.caseName}}'.
+
+$$Click here to add to calendar$$
+
+"
+
+Handling Ambiguity:
+- If the user is vague (e.g., "schedule a meeting next Tuesday"), you MUST ask for clarifying details ("What time on Tuesday? And what is the meeting about?").
+- If no date is found in the documents, state that: "I could not find a 'Next Hearing Date' mentioned in the available case documents. You can add an event manually or upload the relevant order."
+
+**TONE & GUIDELINES**
+
+- Confident & Capable: "Done." "I can handle that." "Here is the information."
+- Contextual: Always refer to the case. "Adding this to the '{{context.caseName}}' calendar."
+- Secure: Never mention any other case, document, or user. Your world is only this case.`,
 });
 
 // Document analysis prompt for case creation
@@ -175,24 +316,197 @@ const chatFlow = ai.defineFlow(
     try {
       console.log('[Chat Flow] Processing message:', input.message);
       
-      // Use the legal chat prompt with calendar tools
-      const response = await legalChatPrompt(input, {
-        model: 'googleai/gemini-2.5-flash',
-        config: {
-          temperature: 0.7,
-          maxOutputTokens: 2048,
-        },
-        tools: [
-          createCalendarEventTool,
-          checkCalendarAvailabilityTool,
-          listUpcomingEventsTool,
-        ],
-      });
+      // Check if this is a case-scoped chat
+      const isCaseScoped = !!input.context?.caseId;
+      
+      if (isCaseScoped) {
+        console.log('[Chat Flow] Using case-scoped prompt for case:', input.context.caseId);
+        // Use case-scoped prompt without calendar tools (AI will propose actions instead)
+        const response = await caseScopedChatPrompt(input, {
+          model: 'googleai/gemini-2.5-flash',
+          config: {
+            temperature: 0.7,
+            maxOutputTokens: 2048,
+          },
+          // No tools - AI must propose calendar actions instead of calling tools
+        });
 
-      return response.output || {
+        const output = response.output || {
+          response: "I apologize, but I encountered an issue processing your message. Please try again.",
+          suggestions: ["Could you rephrase your question?", "Would you like to upload a document for analysis?"]
+        };
+
+        return output;
+      } else {
+        console.log('[Chat Flow] Using general legal chat prompt');
+        // Use the legal chat prompt with calendar tools
+        const response = await legalChatPrompt(input, {
+          model: 'googleai/gemini-2.5-flash',
+          config: {
+            temperature: 0.7,
+            maxOutputTokens: 2048,
+          },
+          tools: [
+            createCalendarEventTool,
+            checkCalendarAvailabilityTool,
+            listUpcomingEventsTool,
+            createCaseTool,
+          ],
+        });
+      
+      // Continue with existing logic for general chat...
+
+      // Log the full response structure for debugging
+      console.log('[Chat Flow] Full response structure:', JSON.stringify(response, null, 2));
+      console.log('[Chat Flow] Response calls:', response.calls);
+      console.log('[Chat Flow] Response output:', response.output);
+      
+      // Check if the AI used the createCase tool
+      // Genkit may structure tool calls differently - check multiple possible structures
+      let caseData = null;
+      const calls = response.calls || response.toolCalls || [];
+      
+      if (calls && calls.length > 0) {
+        console.log('[Chat Flow] Found tool calls:', calls.length);
+        const caseCall = calls.find((call: any) => 
+          call.name === 'createCase' || 
+          call.tool === 'createCase' ||
+          (typeof call === 'string' && call === 'createCase')
+        );
+        
+        if (caseCall) {
+          console.log('[Chat Flow] Found createCase tool call:', JSON.stringify(caseCall, null, 2));
+          
+          // Handle different response structures
+          const result = caseCall.result || caseCall.output || caseCall;
+          const toolInput = caseCall.input || caseCall.arguments || {};
+          
+          if (result?.success && result?.caseId) {
+            // Case was created successfully by the tool
+            console.log('[Chat Flow] Case created successfully via tool:', result.caseId);
+            caseData = {
+              caseId: result.caseId,
+              caseName: result.caseName || toolInput?.caseName,
+              tags: toolInput?.tags || [],
+              details: toolInput?.details || {},
+              createdAt: new Date().toISOString()
+            };
+          } else if (toolInput && toolInput.caseName) {
+            // Tool was called but we need to extract case data from input for modal pre-fill
+            console.log('[Chat Flow] Tool called with input, extracting case data for modal');
+            caseData = {
+              caseName: toolInput.caseName,
+              tags: toolInput.tags || [],
+              details: toolInput.details || {},
+            };
+          }
+        }
+      } else {
+        console.log('[Chat Flow] No tool calls found in response');
+      }
+
+      const output = response.output || {
         response: "I apologize, but I encountered an issue processing your message. Please try again.",
         suggestions: ["Could you rephrase your question?", "Would you like to upload a document for analysis?"]
       };
+
+      // Add case data to output if tool was used
+      if (caseData) {
+        console.log('[Chat Flow] Returning response with case data:', caseData);
+        return {
+          ...output,
+          actionType: 'createCase' as const,
+          caseData: caseData
+        };
+      }
+
+      // FALLBACK: If user asked to create case and document is present, but tool wasn't called,
+      // try to extract case data from document using document analysis
+      const userWantsCaseCreation = input.message.toLowerCase().includes('create a case') || 
+                                    input.message.toLowerCase().includes('create case') ||
+                                    input.message.toLowerCase().includes('analyze and create');
+      
+      if (userWantsCaseCreation && input.document && !caseData) {
+        console.log('[Chat Flow] User wants case creation but tool wasn\'t called, using fallback document analysis...');
+        try {
+          const docAnalysis = await analyzeDocumentForCase({
+            document: input.document,
+            documentName: input.documentName || 'Document'
+          });
+          
+          // Create case data structure from analysis
+          caseData = {
+            caseName: docAnalysis.caseName,
+            tags: docAnalysis.tags || [],
+            details: {
+              petitionerName: docAnalysis.petitionerName,
+              respondentName: docAnalysis.respondentName,
+              caseNumber: docAnalysis.caseNumber,
+              courtName: docAnalysis.courtName,
+              judgeName: docAnalysis.judgeName,
+              petitionerCounsel: docAnalysis.petitionerCounsel,
+              respondentCounsel: docAnalysis.respondentCounsel,
+              caseType: docAnalysis.caseType,
+              filingDate: docAnalysis.filingDate,
+              nextHearingDate: docAnalysis.nextHearingDate,
+              summary: docAnalysis.summary,
+              legalSections: docAnalysis.legalSections,
+              keyFacts: docAnalysis.keyFacts,
+            }
+          };
+          
+          console.log('[Chat Flow] Extracted case data from document analysis:', caseData);
+          
+          // If user explicitly requested creation AND we have userId, create the case directly via API
+          // This ensures immediate creation without requiring modal confirmation
+          if (input.context?.userId && caseData.caseName) {
+            try {
+              console.log('[Chat Flow] Creating case directly via API for explicit user request...');
+              // Import and use Firestore directly
+              const { db } = await import('@/lib/firebase-admin');
+              
+              const caseDataForFirestore = {
+                caseName: caseData.caseName,
+                tags: caseData.tags || [],
+                details: caseData.details || {},
+                createdAt: new Date(),
+                updatedAt: new Date()
+              };
+              
+              const docRef = await db
+                .collection('users')
+                .doc(input.context.userId)
+                .collection('cases')
+                .add(caseDataForFirestore);
+              
+              console.log('[Chat Flow] ✅ Case created directly via fallback API, ID:', docRef.id);
+              
+              // Add caseId to caseData
+              caseData.caseId = docRef.id;
+              caseData.createdAt = new Date().toISOString();
+              
+              // Update output response to mention case creation
+              output.response = `${output.response}\n\n✅ **Case "${caseData.caseName}" has been successfully created in your records with the ID **${docRef.id}**. You can view it using the case box below.`;
+            } catch (apiError) {
+              console.error('[Chat Flow] Error creating case via API fallback:', apiError);
+              // Continue without caseId - UI will show modal for manual creation
+            }
+          } else {
+            console.log('[Chat Flow] userId missing or caseName missing, returning caseData without caseId for modal');
+          }
+          
+          return {
+            ...output,
+            actionType: 'createCase' as const,
+            caseData: caseData
+          };
+        } catch (analysisError) {
+          console.error('[Chat Flow] Error in fallback document analysis:', analysisError);
+        }
+      }
+
+      return output;
+      } // Close else block for general chat
     } catch (error) {
       console.error('[Chat Flow] Error:', error);
       return {

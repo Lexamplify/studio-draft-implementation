@@ -110,3 +110,4 @@ export function EventCard({ event, onClick, compact = false }: EventCardProps) {
 export default EventCard;
 
 
+

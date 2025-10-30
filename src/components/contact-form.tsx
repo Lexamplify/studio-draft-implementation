@@ -25,8 +25,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Send } from "lucide-react";
 import { useState } from "react";
-import { db } from "@/lib/firebaseClient";
-import { collection, addDoc, Timestamp } from "firebase/firestore";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }).max(100, {message: "Name seems too long."}),
@@ -38,26 +36,12 @@ const formSchema = z.object({
 type ContactFormValues = z.infer<typeof formSchema>;
 
 async function submitContactForm(data: ContactFormValues): Promise<{ success: boolean; message: string }> {
-  try {
-    console.log("Saving contact form submission to Firestore:", data);
-    
-    // Save to Firestore
-    const docRef = await addDoc(collection(db, "contactSubmissions"), {
-      name: data.name,
-      email: data.email,
-      inquiryType: data.inquiryType,
-      message: data.message,
-      submittedAt: Timestamp.now(),
-      status: "new", // Track status: new, contacted, resolved, etc.
-    });
-    
-    console.log("Contact submission saved with ID:", docRef.id);
-    
-    return { success: true, message: "Thank you for reaching out! We'll be in touch shortly." };
-  } catch (error) {
-    console.error("Error saving contact submission:", error);
-    return { success: false, message: "Failed to submit your message. Please try again." };
+  console.log("Form data submitted:", data);
+  await new Promise(resolve => setTimeout(resolve, 1500));
+  if (data.email.includes("fail")) {
+    return { success: false, message: "Submission failed. Please try again." };
   }
+  return { success: true, message: "Thank you for reaching out! We'll be in touch shortly." };
 }
 
 

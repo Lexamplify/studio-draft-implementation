@@ -142,51 +142,62 @@ interface CaseDashboardProps {
 
 // Mock data for demonstration
 const mockCaseData = {
-  caseNumber: 'CIV-2024-000123',
-  courtName: 'Delhi High Court',
-  judgeName: 'Hon. Justice Rajesh Kumar',
-  filingDate: '2024-01-15',
-  caseType: 'Contract Breach & Commercial Dispute',
+  caseNumber: 'COM.A. 451/2024',
+  courtName: 'Delhi High Court, Commercial Division',
+  judgeName: 'Hon\'ble Justice Rajiv Mehra',
+  filingDate: '2024-02-10',
+  caseType: 'Commercial Suit',
   status: 'Active',
-  jurisdiction: 'New Delhi',
+  jurisdiction: 'High Court',
   nextHearingDate: '2024-12-20',
-  petitionerName: 'Sharma & Associates Pvt. Ltd.',
-  respondentName: 'Global Tech Solutions Inc.',
-  caseCategory: 'Commercial',
-  clientName: 'Priya Sharma',
-  clientContact: '+91 98765 43210 | priya@sharmaassociates.com',
-  opposingCounselName: 'Adv. Vijay Menon',
-  opposingCounselContact: '+91 98765 43211 | vijay@lawfirm.in',
-  courtClerkName: 'Lakshmi Nair',
-  courtClerkContact: '+91 98765 43212 | clerk.dhc@courts.gov.in',
-  documentCount: 47,
-  messageCount: 23
+  petitionerName: 'M/s. Apex Solutions Pvt. Ltd.',
+  respondentName: 'M/s. Innovate Builders',
+  caseCategory: 'Commercial Dispute - Software Development Contract',
+  clientName: 'Sarvesh Kumar, CEO - Apex Solutions',
+  clientContact: '+91 98765 43210 | sarvesh@apexsolutions.in',
+  opposingCounselName: 'Adv. Deepak Gupta',
+  opposingCounselContact: '+91 98765 43211 | deepak.gupta@lawfirm.in',
+  courtClerkName: 'Rajesh Verma',
+  courtClerkContact: '+91 98765 43212 | commercial.dhc@courts.gov.in',
+  documentCount: 52,
+  messageCount: 28,
+  claimAmount: 'INR 2.5 Crores',
+  caseDescription: 'Commercial suit for the recovery of INR 2.5 Crores for breach of contract related to ERP software development. Petitioner claims respondent withheld payment for the final phase. Respondent alleges critical bugs and failure to meet performance metrics, filing a counter-claim for damages.',
+  lastModified: '2024-12-10'
 };
 
 const mockUpcomingEvents = [
   {
     id: 'evt-1',
-    title: 'Final Hearing - Contract Breach',
-    date: '2024-12-20T10:00:00',
-    time: '10:00 AM',
-    description: 'Oral arguments and evidence presentation',
+    title: 'Final Arguments - Commercial Suit',
+    date: '2024-12-20T10:30:00',
+    time: '10:30 AM',
+    description: 'Final hearing for arguments on breach of contract and recovery of INR 2.5 Crores',
     type: 'Hearing'
   },
   {
     id: 'evt-2',
-    title: 'Deadline - Submit Reply Affidavit',
-    date: '2024-12-15T17:00:00',
+    title: 'Deadline - Expert Witness Examination',
+    date: '2024-12-18T17:00:00',
     time: '5:00 PM',
-    description: 'Submission of response to respondent counter-arguments',
+    description: 'Cross-examination of technical expert regarding software performance benchmarks',
     type: 'Deadline'
   },
   {
     id: 'evt-3',
-    title: 'Client Meeting - Case Strategy',
-    date: '2024-12-12T15:00:00',
-    time: '3:00 PM',
-    description: 'Discuss trial strategy and witness preparation',
+    title: 'Client Meeting - Settlement Discussion',
+    date: '2024-12-15T14:00:00',
+    time: '2:00 PM',
+    description: 'Discuss potential settlement options with Apex Solutions leadership',
     type: 'Meeting'
+  },
+  {
+    id: 'evt-4',
+    title: 'Deadline - Submit Technical Evidence',
+    date: '2024-12-13T16:00:00',
+    time: '4:00 PM',
+    description: 'Submission of additional performance benchmark documentation',
+    type: 'Deadline'
   }
 ];
 
@@ -196,7 +207,7 @@ function CaseDashboard({ caseData: propCaseData }: CaseDashboardProps) {
   const [upcomingEvents, setUpcomingEvents] = useState<any[]>(mockUpcomingEvents);
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [aiSummary, setAiSummary] = useState('The case involves a contractual dispute between Sharma & Associates Pvt. Ltd. (Petitioner) and Global Tech Solutions Inc. (Respondent) before the Delhi High Court. The dispute centers on breach of contract allegations related to service delivery standards and payment obligations. Key legal issues include interpretation of contractual terms, assessment of damages, and determination of breach. The case is currently in its active phase with oral arguments scheduled for the final hearing on December 20, 2024. Recent developments include counter-arguments from the respondent challenging the petitioner\'s claims regarding service quality. Next steps involve submission of reply affidavit by December 15, 2024, to address the respondent\'s counter-allegations. The matter involves complex commercial law principles and requires careful analysis of the contractual obligations of both parties.');
+  const [aiSummary, setAiSummary] = useState('This commercial suit (COM.A. 451/2024) involves M/s. Apex Solutions Pvt. Ltd. as petitioner seeking recovery of INR 2.5 Crores from M/s. Innovate Builders for alleged breach of contract in ERP software development. The petitioner claims that Innovate Builders wrongfully withheld payment for the final phase of development. In response, Innovate Builders has filed a counter-claim alleging critical software bugs and failure to meet specified performance metrics. A technical expert\'s report has been submitted confirming the software is functional but fails certain performance benchmarks. The case centers on interpreting contractual terms regarding performance standards, assessing damages for breach, and determining the validity of counter-claims. Recent filings include expert technical analysis, performance benchmark test results, and updated claims documentation.');
 
   // Load case data and events
   useEffect(() => {
@@ -260,7 +271,7 @@ function CaseDashboard({ caseData: propCaseData }: CaseDashboardProps) {
       id: 'add-event', 
       label: 'Add Event', 
       icon: 'calendarPlus', 
-      description: 'Schedule hearings, deadlines, and meetings',
+      description: 'Schedule hearing on Dec 20, deadlines',
       onClick: () => {
         // Navigate to events tab
         const eventTabButton = document.querySelector('[data-tab="events"]') as HTMLButtonElement;
@@ -273,7 +284,7 @@ function CaseDashboard({ caseData: propCaseData }: CaseDashboardProps) {
       id: 'upload-doc', 
       label: 'Upload Doc', 
       icon: 'upload', 
-      description: 'Add case documents and evidence',
+      description: 'Add technical evidence, expert reports',
       onClick: () => {
         // Navigate to documents tab
         const docsTabButton = document.querySelector('[data-tab="docs"]') as HTMLButtonElement;
@@ -286,7 +297,7 @@ function CaseDashboard({ caseData: propCaseData }: CaseDashboardProps) {
       id: 'create-draft', 
       label: 'Create Draft', 
       icon: 'fileEdit', 
-      description: 'Start drafting legal documents',
+      description: 'Reply affidavit for technical evidence',
       onClick: () => {
         // This would open the draft editor
         console.log('Create draft clicked');
@@ -296,7 +307,7 @@ function CaseDashboard({ caseData: propCaseData }: CaseDashboardProps) {
       id: 'start-chat', 
       label: 'Start Chat', 
       icon: 'messageCircle', 
-      description: 'Discuss case with AI assistant',
+      description: 'Analyze case strategy with AI',
       onClick: () => {
         // Navigate to chats tab
         const chatsTabButton = document.querySelector('[data-tab="chats"]') as HTMLButtonElement;
@@ -340,7 +351,7 @@ function CaseDashboard({ caseData: propCaseData }: CaseDashboardProps) {
               {aiSummary || 'AI summary will be generated based on case documents...'}
             </p>
             <p className="text-sm text-blue-600 mt-2">
-              📊 Generated from 47 documents • 🕐 Last updated 2 hours ago
+              📊 Generated from 52 documents • 🕐 Last updated 2 hours ago
             </p>
           </div>
           <button className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center">
@@ -586,6 +597,13 @@ function CaseDashboard({ caseData: propCaseData }: CaseDashboardProps) {
                   </span>
                 )}
               </DetailItem>
+              <DetailItem label="Claim Amount" value={caseData?.claimAmount}>
+                {caseData?.claimAmount && (
+                  <span className="ml-2 px-3 py-1 text-sm font-semibold bg-blue-100 text-blue-800 rounded-full">
+                    {caseData.claimAmount}
+                  </span>
+                )}
+              </DetailItem>
               <DetailItem label="Jurisdiction" value={caseData?.jurisdiction} />
               <DetailItem 
                 label="Next Hearing" 
@@ -595,6 +613,9 @@ function CaseDashboard({ caseData: propCaseData }: CaseDashboardProps) {
               <DetailItem label="Petitioner" value={caseData?.petitionerName} />
               <DetailItem label="Respondent" value={caseData?.respondentName} />
               <DetailItem label="Case Category" value={caseData?.caseCategory} />
+              {caseData?.lastModified && (
+                <DetailItem label="Last Modified" value={caseData.lastModified} format="date" />
+              )}
             </div>
           )}
         </div>

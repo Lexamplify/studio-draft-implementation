@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,9 +13,31 @@ import { useAppContext } from '@/context/app-context';
 import { useCases } from '@/context/cases-context';
 
 
+interface PrefilledCaseData {
+  caseName?: string;
+  tags?: string[];
+  details?: {
+    petitionerName?: string;
+    respondentName?: string;
+    caseNumber?: string;
+    courtName?: string;
+    judgeName?: string;
+    petitionerCounsel?: string;
+    respondentCounsel?: string;
+    caseType?: string;
+    filingDate?: string;
+    nextHearingDate?: string;
+    summary?: string;
+    legalSections?: string[];
+    keyFacts?: string[];
+  };
+}
+
 interface NewCaseModalProps {
   isOpen: boolean;
   onClose: () => void;
+  prefilledData?: PrefilledCaseData;
+  onCaseCreated?: (caseData: { id: string; caseName: string; createdAt: Date }) => void;
 }
 
 // Helper function to create the initial empty form state
@@ -37,10 +59,22 @@ const createInitialFormData = () => ({
   }
 });
 
-export default function NewCaseModal({ isOpen, onClose }: NewCaseModalProps) {
-  const { createCase } = useCases();
+export default function NewCaseModal({ isOpen, onClose, prefilledData, onCaseCreated }: NewCaseModalProps) {
+  const { createCase, refetch } = useCases();
   const { setActiveView, setSelectedCaseId } = useAppContext();
-  const [formData, setFormData] = useState(createInitialFormData());
+  const [formData, setFormData] = useState(() => {
+    if (prefilledData) {
+      return {
+        caseName: prefilledData.caseName || '',
+        tags: prefilledData.tags || [],
+        details: {
+          ...createInitialFormData().details,
+          ...prefilledData.details,
+        }
+      };
+    }
+    return createInitialFormData();
+  });
   const [newTag, setNewTag] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -48,6 +82,24 @@ export default function NewCaseModal({ isOpen, onClose }: NewCaseModalProps) {
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Reset form when modal opens/closes or prefilledData changes
+  useEffect(() => {
+    if (isOpen) {
+      if (prefilledData) {
+        setFormData({
+          caseName: prefilledData.caseName || '',
+          tags: prefilledData.tags || [],
+          details: {
+            ...createInitialFormData().details,
+            ...prefilledData.details,
+          }
+        });
+      } else {
+        setFormData(createInitialFormData());
+      }
+    }
+  }, [isOpen, prefilledData]);
 
   // Case templates for quick setup
   const caseTemplates = [
@@ -125,6 +177,18 @@ export default function NewCaseModal({ isOpen, onClose }: NewCaseModalProps) {
         tags: formData.tags,
         details: formData.details,
       });
+      
+      // Refresh cases list
+      await refetch();
+      
+      // Notify parent component about case creation
+      if (onCaseCreated) {
+        onCaseCreated({
+          id: newCase.id,
+          caseName: newCase.caseName,
+          createdAt: newCase.createdAt || new Date()
+        });
+      }
       
       // Reset form before navigation
       setFormData(createInitialFormData());

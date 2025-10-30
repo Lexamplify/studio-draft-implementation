@@ -4,7 +4,7 @@ import { auth } from '@/lib/firebase-admin';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { caseId: string } }
+  { params }: { params: Promise<{ caseId: string }> }
 ) {
   try {
     // Get auth token from header
@@ -17,7 +17,7 @@ export async function GET(
     const decodedToken = await auth.verifyIdToken(idToken);
     const uid = decodedToken.uid;
 
-    const { caseId } = params;
+    const { caseId } = await params;
 
     // Fetch specific case
     const caseDoc = await db
@@ -46,7 +46,7 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { caseId: string } }
+  { params }: { params: Promise<{ caseId: string }> }
 ) {
   try {
     // Get auth token from header
@@ -59,7 +59,7 @@ export async function PUT(
     const decodedToken = await auth.verifyIdToken(idToken);
     const uid = decodedToken.uid;
 
-    const { caseId } = params;
+    const { caseId } = await params;
     const body = await req.json();
     const { caseName, tags, details } = body;
 
@@ -90,7 +90,7 @@ export async function PUT(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { caseId: string } }
+  { params }: { params: Promise<{ caseId: string }> }
 ) {
   try {
     // Get auth token from header
@@ -103,7 +103,34 @@ export async function DELETE(
     const decodedToken = await auth.verifyIdToken(idToken);
     const uid = decodedToken.uid;
 
-    const { caseId } = params;
+    const { caseId } = await params;
+    const { searchParams } = new URL(req.url);
+    const deleteChats = searchParams.get('deleteChats') === 'true';
+
+    // Get all chats linked to this case
+    const chatsSnapshot = await db
+      .collection('users')
+      .doc(uid)
+      .collection('chats')
+      .where('linkedCaseId', '==', caseId)
+      .get();
+
+    const linkedChats = chatsSnapshot.docs;
+
+    // Handle linked chats based on user choice
+    if (linkedChats.length > 0) {
+      if (deleteChats) {
+        // Delete all linked chats
+        const deletePromises = linkedChats.map(chatDoc => chatDoc.ref.delete());
+        await Promise.all(deletePromises);
+      } else {
+        // Unlink chats (set linkedCaseId to null)
+        const unlinkPromises = linkedChats.map(chatDoc => 
+          chatDoc.ref.update({ linkedCaseId: null })
+        );
+        await Promise.all(unlinkPromises);
+      }
+    }
 
     // Delete case
     await db
@@ -113,7 +140,11 @@ export async function DELETE(
       .doc(caseId)
       .delete();
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ 
+      success: true,
+      deletedChats: deleteChats ? linkedChats.length : 0,
+      unlinkedChats: !deleteChats ? linkedChats.length : 0
+    });
   } catch (error) {
     console.error('Error deleting case:', error);
     return NextResponse.json(

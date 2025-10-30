@@ -165,33 +165,42 @@ export default function LoginPage() {
       // Extract and store Google OAuth access token
       const credential = GoogleAuthProvider.credentialFromResult(result);
       const accessToken = credential?.accessToken;
+      
+      console.log("Credential:", credential);
+      console.log("Access Token:", accessToken);
+      console.log("Result:", result);
+      
       if (accessToken) {
         localStorage.setItem('googleAccessToken', accessToken);
         // Set expiry to 1 hour from now (Google tokens expire in 1 hour)
         const expiryTime = Date.now() + (60 * 60 * 1000);
         localStorage.setItem('googleTokenExpiry', expiryTime.toString());
-        console.log("Google login successful");
-        
-        // Store authentication info for editor access
-        if (result.user) {
-          const authData = {
-            isAuthenticated: true,
-            user: {
-              email: result.user.email,
-              uid: result.user.uid,
-              displayName: result.user.displayName
-            },
-            loginTime: Date.now(),
-            loginMethod: 'google',
-            googleAccessToken: accessToken
-          };
-          localStorage.setItem('mainWebsiteAuth', JSON.stringify(authData));
-          console.log('✅ Main website Google login success - Auth data stored for editor:', authData);
-        }
-        
-        router.replace("/assistant");
+        console.log("✅ Google login successful - Token stored");
+      } else {
+        console.warn("⚠️ Google login successful but no access token retrieved");
+        // For now, store a placeholder to indicate Google login happened
+        // The user will need to grant calendar permissions separately
+        localStorage.setItem('googleLoginCompleted', 'true');
       }
       
+      // Store authentication info for editor access
+      if (result.user) {
+        const authData = {
+          isAuthenticated: true,
+          user: {
+            email: result.user.email,
+            uid: result.user.uid,
+            displayName: result.user.displayName
+          },
+          loginTime: Date.now(),
+          loginMethod: 'google',
+          googleAccessToken: accessToken
+        };
+        localStorage.setItem('mainWebsiteAuth', JSON.stringify(authData));
+        console.log('✅ Main website Google login success - Auth data stored for editor:', authData);
+      }
+      
+      router.replace("/assistant");
     } catch (err: unknown) {
       console.error("Google login error:", err);
       if (err instanceof FirebaseError) {

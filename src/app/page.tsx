@@ -15,7 +15,7 @@ export default function Home() {
       <Header />
       <HeroSection />
       <AlternatingFeaturesSection />
-  {/*     <TrustedBySection /> */}
+      <TrustedBySection />
       <SecuritySection />
       {/** ss4 removed: <IconBenefitsSection /> */}
       {/** ss2 commented out: <DetailedFeaturesSection /> */}

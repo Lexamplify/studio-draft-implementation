@@ -189,3 +189,4 @@ export function EventDetailModal({ open, onClose, event }: EventDetailModalProps
 export default EventDetailModal;
 
 
+

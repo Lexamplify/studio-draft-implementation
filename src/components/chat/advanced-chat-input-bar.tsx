@@ -109,20 +109,27 @@ export default function AdvancedChatInputBar({
   const handleSend = useCallback(async () => {
     if (!inputValue.trim() && stagedFiles.length === 0 && !stagedAction) return;
     
+    // Store values before clearing
+    const messageToSend = inputValue;
+    const filesToSend = [...stagedFiles];
+    const actionToSend = stagedAction;
+    
+    // Reset UI immediately (before async operations) for instant feedback
+    setInputValue('');
+    setStagedFiles([]);
+    setStagedAction(null);
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+    }
+    
     setIsSubmitting(true);
     
     try {
-      await onSendMessage(inputValue, stagedFiles, stagedAction);
-      
-      // Reset UI after successful send
-      setInputValue('');
-      setStagedFiles([]);
-      setStagedAction(null);
-      if (textareaRef.current) {
-        textareaRef.current.style.height = 'auto';
-      }
+      // Send message (will show in chat immediately on client side)
+      await onSendMessage(messageToSend, filesToSend, actionToSend);
     } catch (error) {
       console.error('Error sending message:', error);
+      // Re-add values if send failed (optional - could show error instead)
     } finally {
       setIsSubmitting(false);
     }

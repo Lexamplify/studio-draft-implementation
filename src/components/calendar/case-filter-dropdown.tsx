@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useCalendarContext } from '@/context/calendar-context';
-import { useCasesContext } from '@/context/cases-context';
+import { useCases } from '@/context/cases-context';
 import {
   Select,
   SelectContent,
@@ -13,7 +13,7 @@ import {
 
 export function CaseFilterDropdown() {
   const { selectedCaseId, setSelectedCaseId } = useCalendarContext();
-  const { cases } = useCasesContext();
+  const { cases } = useCases();
   
   return (
     <Select value={selectedCaseId || 'all'} onValueChange={(value) => setSelectedCaseId(value === 'all' ? null : value)}>
@@ -33,5 +33,6 @@ export function CaseFilterDropdown() {
 }
 
 export default CaseFilterDropdown;
+
 
 

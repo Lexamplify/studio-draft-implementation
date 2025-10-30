@@ -103,3 +103,4 @@ export function AgendaView({ events, onEventClick }: AgendaViewProps) {
 export default AgendaView;
 
 
+

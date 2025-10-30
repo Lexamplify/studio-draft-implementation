@@ -1182,7 +1182,29 @@ export function CaseOverview({ caseData, taskProgress }: { caseData?: any; taskP
 export function CaseDetails({ caseData }: { caseData?: any }) {
   const { selectedCaseId } = useAppContext();
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState(caseData || {});
+  
+  const [formData, setFormData] = useState(() => {
+    // Extract details from nested structure or flat structure
+    if (!caseData) return {};
+    // Check if data is in nested details object
+    if (caseData.details) {
+      return caseData.details;
+    }
+    // Otherwise return the data as-is
+    return caseData;
+  });
+
+  // Update formData when caseData changes (important for when Firebase data loads)
+  useEffect(() => {
+    if (caseData) {
+      // Extract details from nested structure or flat structure
+      if (caseData.details) {
+        setFormData(caseData.details);
+      } else {
+        setFormData(caseData);
+      }
+    }
+  }, [caseData]);
 
   // Handle saving case details
   const handleSaveCaseDetails = async (updatedData: any) => {

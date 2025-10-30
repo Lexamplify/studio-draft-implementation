@@ -4,8 +4,6 @@ import admin from 'firebase-admin';
 
 // Debug: print detected env vars once (avoid leaking private key)
 console.log('[Firebase Admin] Detected projectId:', process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);
-console.log('[Firebase Admin] Detected clientEmail:', process.env.CLIENT_EMAIL ? 'present' : 'missing');
-console.log('[Firebase Admin] Detected privateKey:', process.env.PRIVATE_KEY ? 'present' : 'missing');
 
 function getFirebasePrivateKey() {
   // Get the private key, handling newlines correctly
@@ -36,8 +34,6 @@ function initializeFirebaseAdmin() {
     const privateKey = process.env.PRIVATE_KEY;
 
     console.log('[Firebase Admin] Using projectId:', projectId);
-    console.log('[Firebase Admin] clientEmail available:', !!clientEmail);
-    console.log('[Firebase Admin] privateKey available:', !!privateKey);
 
     if (clientEmail && privateKey) {
       // Initialize with environment variables

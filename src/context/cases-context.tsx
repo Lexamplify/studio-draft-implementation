@@ -19,7 +19,7 @@ interface CasesContextType {
   error: string | null;
   createCase: (caseData: { caseName: string; tags?: string[]; details?: Record<string, any> }) => Promise<Case>;
   updateCase: (id: string, updates: Partial<Case>) => Promise<Case>;
-  deleteCase: (id: string) => Promise<void>;
+  deleteCase: (id: string, deleteChats?: boolean) => Promise<void>;
   refetch: () => Promise<void>;
 }
 
@@ -75,9 +75,10 @@ export function CasesProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const deleteCase = useCallback(async (id: string) => {
+  const deleteCase = useCallback(async (id: string, deleteChats: boolean = false) => {
     try {
-      await apiClient.delete(`/api/cases/${id}`);
+      const url = `/api/cases/${id}${deleteChats ? '?deleteChats=true' : ''}`;
+      await apiClient.delete(url);
       setCases(prev => prev.filter(c => c.id !== id));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete case');

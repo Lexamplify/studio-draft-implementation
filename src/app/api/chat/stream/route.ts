@@ -1,13 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { processChatMessage } from '@/ai/flows/chat-flow';
 import { auth, db } from '@/lib/firebase-admin';
 
+// Streaming chat endpoint using Server-Sent Events
 export async function POST(req: NextRequest) {
   try {
     // Get auth token from header
     const authHeader = req.headers.get('authorization');
     if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Missing or invalid Authorization header' }, { status: 401 });
+      return new Response(JSON.stringify({ error: 'Missing or invalid Authorization header' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
 
     const idToken = authHeader.split('Bearer ')[1];
@@ -18,14 +22,16 @@ export async function POST(req: NextRequest) {
     const { message, chatHistory, context, document, documentName, chatId } = body;
 
     if (!message) {
-      return NextResponse.json({ error: 'Message is required' }, { status: 400 });
+      return new Response(JSON.stringify({ error: 'Message is required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
 
     // Fetch files for this chat if chatId is provided
     let chatFiles = [];
     if (chatId) {
       try {
-        // Use correct Firestore path structure (users/{uid}/chats/{chatId}/files)
         const filesSnapshot = await db
           .collection('users')
           .doc(uid)
@@ -51,22 +57,16 @@ export async function POST(req: NextRequest) {
             uploadedAt: uploadedAt || new Date()
           };
         });
-        console.log('Fetched chat files:', chatFiles);
       } catch (error) {
         console.error('Error fetching chat files:', error);
-        // Continue without files if there's an error
       }
     }
     
-    // Extract document content from context.files if provided (from client)
-    // Prefer document from body, otherwise get from context.files[0]
-    // IMPORTANT: Only use files from context if they have content (newly uploaded)
-    // Don't use all chat files, only the files uploaded with this specific message
+    // Extract document content
     let documentContent = document;
     let documentNameValue = documentName;
     
     if (!documentContent && context?.files && context.files.length > 0) {
-      // Find the first file that has content (newly uploaded files have content property)
       const fileWithContent = context.files.find((f: any) => f.content || f.text);
       if (fileWithContent) {
         documentContent = fileWithContent.content || fileWithContent.text || '';
@@ -130,73 +130,116 @@ export async function POST(req: NextRequest) {
             };
           });
           
-          console.log('[Chat API] Fetched case data and documents:', {
+          console.log('[Stream API] Fetched case data and documents:', {
             caseName,
             metadata: caseMetadata,
             documentCount: documentContext.length
           });
         }
       } catch (error) {
-        console.error('[Chat API] Error fetching case data:', error);
+        console.error('[Stream API] Error fetching case data:', error);
         // Continue without document context if fetch fails
       }
     }
 
-    // Convert Firestore timestamps to ISO strings for AI processing
+    // Convert Firestore timestamps to ISO strings
     const processedChatHistory = chatHistory?.map((msg: any) => {
       let timestamp = msg.timestamp;
-      
-      // Handle Firebase Timestamp objects
       if (timestamp && typeof timestamp === 'object' && timestamp._seconds) {
-        // Convert Firebase Timestamp to JavaScript Date
         const date = new Date(timestamp._seconds * 1000 + timestamp._nanoseconds / 1000000);
         timestamp = date.toISOString();
       } else if (timestamp?.toDate) {
-        // Handle Firestore Timestamp objects with toDate method
         timestamp = timestamp.toDate().toISOString();
       } else if (timestamp instanceof Date) {
-        // Handle JavaScript Date objects
         timestamp = timestamp.toISOString();
       }
-      
       return {
         ...msg,
         timestamp
       };
     });
 
-    // Process the chat message with AI
-    const response = await processChatMessage({
-      message,
-      chatHistory: processedChatHistory,
-      context: {
-        ...context,
-        caseName: caseName, // Add case name if available
-        caseMetadata: caseMetadata, // Add full case metadata (caseNumber, caseType, etc.)
-        documentContext: documentContext.length > 0 ? documentContext : undefined, // Add document context if available
-        userId: uid, // Ensure userId is always available in context
-        files: chatFiles, // Include chat files in context
+    // Create a ReadableStream for SSE
+    const stream = new ReadableStream({
+      async start(controller) {
+        const encoder = new TextEncoder();
+        
+        try {
+          // Send initial status
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'status', status: 'processing' })}\n\n`));
+
+          // Process chat message and stream the response
+          const response = await processChatMessage({
+            message,
+            chatHistory: processedChatHistory,
+            context: {
+              ...context,
+              caseName: caseName, // Add case name if available
+              caseMetadata: caseMetadata, // Add full case metadata (caseNumber, caseType, etc.)
+              documentContext: documentContext.length > 0 ? documentContext : undefined, // Add document context if available
+              userId: uid,
+              files: chatFiles,
+            },
+            document: documentContent,
+            documentName: documentNameValue,
+          });
+
+          // Stream the response text character by character for smooth typing effect
+          const responseText = response.response || '';
+          
+          // Send chunks progressively (character by character for smooth effect)
+          for (let i = 0; i < responseText.length; i++) {
+            const char = responseText[i];
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({ 
+                type: 'chunk', 
+                content: char 
+              })}\n\n`)
+            );
+            // Small delay for smooth streaming effect (adjust for speed)
+            // Character-by-character gives smoother effect than word-by-word
+            await new Promise(resolve => setTimeout(resolve, 15));
+          }
+
+          // Send final data (caseData, actionType, etc.)
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({
+              type: 'complete',
+              response: responseText,
+              caseData: response.caseData,
+              actionType: response.actionType,
+              citations: response.citations,
+              suggestions: response.suggestions
+            })}\n\n`)
+          );
+
+        } catch (error) {
+          console.error('[Stream API] Error:', error);
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({
+              type: 'error',
+              error: error instanceof Error ? error.message : 'Failed to process message'
+            })}\n\n`)
+          );
+        } finally {
+          controller.close();
+        }
+      }
+    });
+
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'X-Accel-Buffering': 'no', // Disable buffering for nginx
       },
-      document: documentContent, // Use extracted document content
-      documentName: documentNameValue, // Use extracted document name
     });
-
-    // Log the response for debugging
-    console.log('[Chat API] Response from processChatMessage:', {
-      hasResponse: !!response.response,
-      hasCaseData: !!response.caseData,
-      actionType: response.actionType,
-      caseData: response.caseData,
-      caseId: response.caseData?.caseId,
-      userId: uid // Log userId to verify it's available
-    });
-
-    return NextResponse.json(response);
   } catch (error) {
-    console.error('Error processing chat message:', error);
-    return NextResponse.json(
-      { error: 'Failed to process chat message' },
-      { status: 500 }
-    );
+    console.error('Error in streaming chat:', error);
+    return new Response(JSON.stringify({ error: 'Failed to process chat message' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 }

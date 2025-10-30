@@ -49,6 +49,7 @@ export default function MainChatWindow({ chatId, onReopenWorkspace, setLoadingCh
   const [loadingChatId, setLoadingChatIdState] = useState<string | null>(null);
   const [selectedDocument, setSelectedDocument] = useState<any>(null);
   const [isDocumentViewerOpen, setIsDocumentViewerOpen] = useState(false);
+  const [isCaseContextModalOpen, setIsCaseContextModalOpen] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { executeSubmission, isProcessing, currentStep } = useSubmissionWorkflow();
@@ -155,43 +156,24 @@ export default function MainChatWindow({ chatId, onReopenWorkspace, setLoadingCh
         userId: user?.uid || '',
         chatFiles: currentChatFiles, // Pass existing chat files for context
         onSuccess: async (response: any) => {
-          // Store uploaded files in chat context and database
+          // Files are already uploaded and saved in the workflow (use-submission-workflow.ts)
+          // Just refresh files for this chat to ensure they're in context
           if (files.length > 0 && currentChatId) {
-            // Upload files to Firebase storage and get URLs
-            const uploadPromises = files.map(async (file) => {
-              try {
-                const uploadedFile = await uploadChatFile(file, currentChatId, user?.uid || '');
-                const fileData = {
-                  id: uploadedFile.id,
-                  name: uploadedFile.name,
-                  type: uploadedFile.type,
-                  size: uploadedFile.size,
-                  url: uploadedFile.url,
-                  uploadedAt: uploadedFile.uploadedAt
-                };
-                
-                // Add to local context
-                addFileToChat(currentChatId, fileData);
-                
-                // Save to database
-                await apiClient.post(`/api/chats/${currentChatId}/files`, fileData);
-                
-              } catch (error) {
-                console.error('Error uploading file:', error);
-                // Still add file to context even if upload fails
-                const fileData = {
-                  id: `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            try {
+              const updatedFiles = await apiClient.get(`/api/chats/${currentChatId}/files`);
+              (updatedFiles || []).forEach((file: any) => {
+                addFileToChat(currentChatId, {
+                  id: file.id,
                   name: file.name,
                   type: file.type,
                   size: file.size,
-                  url: '', // No URL if upload failed
-                  uploadedAt: new Date()
-                };
-                addFileToChat(currentChatId, fileData);
-              }
-            });
-            
-            await Promise.all(uploadPromises);
+                  url: file.url,
+                  uploadedAt: file.uploadedAt?.toDate ? file.uploadedAt.toDate() : new Date(file.uploadedAt || Date.now())
+                });
+              });
+            } catch (error) {
+              console.error('Error refreshing files:', error);
+            }
           }
           
           // Add AI response using the hook
@@ -442,14 +424,25 @@ export default function MainChatWindow({ chatId, onReopenWorkspace, setLoadingCh
           </div>
 
           {isCaseLinkedChat && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleViewCase}
-            >
-              <Icon name="externalLink" className="w-4 h-4 mr-2" />
-              View Case
-            </Button>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsCaseContextModalOpen(true)}
+                className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+              >
+                <Icon name="info" className="w-4 h-4 mr-2" />
+                View Context
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleViewCase}
+              >
+                <Icon name="externalLink" className="w-4 h-4 mr-2" />
+                View Case
+              </Button>
+            </div>
           )}
         </div>
       </div>
@@ -635,6 +628,96 @@ export default function MainChatWindow({ chatId, onReopenWorkspace, setLoadingCh
         }}
         file={selectedDocument}
       />
+
+      {/* Case Context Modal */}
+      {isCaseContextModalOpen && currentCase && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">Case Context</h2>
+              <button
+                onClick={() => setIsCaseContextModalOpen(false)}
+                className="p-1 rounded hover:bg-gray-100 transition-colors"
+              >
+                <Icon name="x" className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-sm font-medium text-gray-700 mb-1">Case Name</h3>
+                <p className="text-base text-gray-900">{currentCase.caseName}</p>
+              </div>
+
+              {currentCase.details && (
+                <>
+                  {currentCase.details.petitionerName && (
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-700 mb-1">Petitioner</h3>
+                      <p className="text-base text-gray-900">{currentCase.details.petitionerName}</p>
+                    </div>
+                  )}
+
+                  {currentCase.details.respondentName && (
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-700 mb-1">Respondent</h3>
+                      <p className="text-base text-gray-900">{currentCase.details.respondentName}</p>
+                    </div>
+                  )}
+
+                  {currentCase.details.courtName && (
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-700 mb-1">Court</h3>
+                      <p className="text-base text-gray-900">{currentCase.details.courtName}</p>
+                    </div>
+                  )}
+
+                  {currentCase.details.caseNumber && (
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-700 mb-1">Case Number</h3>
+                      <p className="text-base text-gray-900">{currentCase.details.caseNumber}</p>
+                    </div>
+                  )}
+
+                  {currentCase.details.nextHearingDate && (
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-700 mb-1">Next Hearing Date</h3>
+                      <p className="text-base text-gray-900">{currentCase.details.nextHearingDate}</p>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {currentCase.tags && currentCase.tags.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-medium text-gray-700 mb-2">Tags</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {currentCase.tags.map((tag: string, index: number) => (
+                      <span
+                        key={index}
+                        className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="pt-4 border-t border-gray-200">
+                <Button
+                  variant="outline"
+                  onClick={handleViewCase}
+                  className="w-full"
+                >
+                  <Icon name="externalLink" className="w-4 h-4 mr-2" />
+                  View Full Case Details
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

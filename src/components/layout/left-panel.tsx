@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Icon } from '@/components/ui/icon';
@@ -117,17 +117,26 @@ export default function LeftPanel({ isCollapsed, onToggleCollapse, loadingChatId
 
   const handleRename = (id: string, name: string, type: 'case' | 'chat') => {
     setSelectedItem({ id, name, type });
-    setIsRenameModalOpen(true);
+    setTimeout(() => setIsRenameModalOpen(true), 0);
   };
 
   const handleDelete = (id: string, name: string, type: 'case' | 'chat') => {
     setSelectedItem({ id, name, type });
-    setIsDeleteModalOpen(true);
+    setTimeout(() => setIsDeleteModalOpen(true), 0);
   };
 
   const handleLink = (id: string, name: string, type: 'case' | 'chat') => {
     setSelectedItem({ id, name, type });
-    setIsLinkModalOpen(true);
+    
+    // This is the logic bug fix:
+    if (type === 'chat') {
+      setTimeout(() => setIsLinkModalOpen(true), 0);
+    } else {
+      // This is a 'case', DO NOT open the LinkUnlinkModal
+      console.warn('"Move to organization" clicked for a case. This requires a different modal and handler.');
+      alert('"Move to organization" is not yet implemented for cases.');
+      setSelectedItem(null); // Clear selection since we're not opening a modal
+    }
   };
 
   const handleRenameConfirm = async (newName: string) => {
@@ -146,25 +155,39 @@ export default function LeftPanel({ isCollapsed, onToggleCollapse, loadingChatId
     }
   };
 
+  const [deleteChatsOption, setDeleteChatsOption] = useState(false);
+
+  // Memoize linked chats calculation to prevent infinite re-renders
+  const linkedChatsForCase = useMemo(() => {
+    if (!selectedItem || selectedItem.type !== 'case' || !selectedItem.id) return [];
+    return chats.filter(c => c.linkedCaseId === selectedItem.id);
+  }, [chats, selectedItem?.id, selectedItem?.type]);
+
   const handleDeleteConfirm = async () => {
     if (!selectedItem) return;
     
     try {
       if (selectedItem.type === 'case') {
-        await deleteCase(selectedItem.id);
-        // If the deleted case was selected, clear selection
-        if (selectedCaseId === selectedItem.id) {
-          setSelectedCaseId(null);
-        }
+        // Case deletion disabled - just log for now
+        console.log('Case delete button triggered:', {
+          caseId: selectedItem.id,
+          caseName: selectedItem.name,
+          deleteChatsOption: deleteChatsOption
+        });
+        // Close modal after logging
+        setIsDeleteModalOpen(false);
+        setSelectedItem(null);
+        setDeleteChatsOption(false);
       } else if (selectedItem.type === 'chat') {
         await deleteChat(selectedItem.id);
         // If the deleted chat was selected, clear selection
         if (selectedChatId === selectedItem.id) {
           setSelectedChatId(null);
         }
+        // Close modal and clear selection after successful deletion
+        setIsDeleteModalOpen(false);
+        setSelectedItem(null);
       }
-      setIsDeleteModalOpen(false);
-      setSelectedItem(null);
     } catch (error) {
       console.error('Error deleting:', error);
     }
@@ -355,8 +378,8 @@ export default function LeftPanel({ isCollapsed, onToggleCollapse, loadingChatId
                 className="w-8 h-8 rounded-lg object-cover"
                 onError={(e) => {
                   // Fallback to text if image fails to load
-                  e.currentTarget.style.display = 'none';
-                  const fallback = e.currentTarget.parentElement?.querySelector('.logo-fallback');
+                  (e.currentTarget as HTMLElement).style.display = 'none';
+                  const fallback = e.currentTarget.parentElement?.querySelector('.logo-fallback') as HTMLElement;
                   if (fallback) fallback.style.display = 'flex';
                 }}
               />
@@ -419,53 +442,57 @@ export default function LeftPanel({ isCollapsed, onToggleCollapse, loadingChatId
             </div>
 
             {/* Existing Cases */}
-            {casesLoading ? (
-              <CaseSkeletonList count={3} className="space-y-0.5" />
-            ) : (
-              filteredCases.map((case_) => (
-                <div
-                  key={case_.id}
-                  className="group flex items-center justify-between p-1 hover:bg-gray-50 rounded cursor-pointer transition-all duration-200 ease-in-out"
-                  onClick={() => handleItemClick(case_.id, 'case')}
-                >
-                  <div className="flex items-center space-x-3 flex-1 min-w-0">
-                    <span className="text-sm text-black truncate font-medium transition-opacity duration-300 ease-in-out">
-                      {case_.caseName}
-                    </span>
-                  </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button
-                        onClick={(e) => e.stopPropagation()}
-                        className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 rounded"
-                      >
-                        <Icon name="moreHorizontal" className="w-4 h-4 text-gray-500" />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="bg-white border-gray-200">
-                      <DropdownMenuItem
-                        onClick={() => handleRename(case_.id, case_.caseName, 'case')}
-                        className="text-black hover:bg-gray-50"
-                      >
-                        Rename
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleLink(case_.id, case_.caseName, 'case')}
-                        className="text-black hover:bg-gray-50"
-                      >
-                        Move to organization
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleDelete(case_.id, case_.caseName, 'case')}
-                        className="text-red-600 hover:bg-gray-50"
-                      >
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              ))
-            )}
+            {/* Existing Cases */}
+                  {casesLoading ? (
+       <CaseSkeletonList count={3} className="space-y-0.5" />
+      ) : (
+       filteredCases.map((case_) => (
+        <div
+         key={case_.id}
+         className="group flex items-center justify-between p-1 hover:bg-gray-50 rounded cursor-pointer transition-all duration-200 ease-in-out"
+         onClick={() => handleItemClick(case_.id, 'case')}
+        >
+         <div className="flex items-center space-x-3 flex-1 min-w-0">
+          <span className="text-sm text-black truncate font-medium transition-opacity duration-300 ease-in-out">
+           {case_.caseName}
+          </span>
+         </div>
+
+         {/* Logic from first example applied here */}
+         {!(loadingChatId === case_.id || case_.caseName === 'Loading...') && (
+          <DropdownMenu>
+           <DropdownMenuTrigger asChild>
+            <button
+             onClick={(e) => e.stopPropagation()}
+             className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 rounded"
+            >
+             <Icon name="moreHorizontal" className="w-4 h-4 text-gray-500" />
+            </button>
+           </DropdownMenuTrigger>
+           <DropdownMenuContent align="end" className="bg-white border-gray-200">
+             <DropdownMenuItem
+              onClick={() => handleRename(case_.id, case_.caseName, 'case')}
+              className="text-black hover:bg-gray-50"
+             >
+              Rename           </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => handleLink(case_.id, case_.caseName, 'case')}
+              className="text-black hover:bg-gray-50"
+             >
+              Move to organization
+             </DropdownMenuItem>
+             <DropdownMenuItem
+              onClick={() => handleDelete(case_.id, case_.caseName, 'case')}
+              className="text-red-600 hover:bg-gray-50"
+             >
+              Delete
+             </DropdownMenuItem>
+           </DropdownMenuContent>
+          </DropdownMenu>
+         )}
+        </div>
+       ))
+      )}
           </div>
         </div>
 
@@ -624,25 +651,42 @@ export default function LeftPanel({ isCollapsed, onToggleCollapse, loadingChatId
       {/* Modals */}
       <RenameModal
         isOpen={isRenameModalOpen}
-        onClose={() => setIsRenameModalOpen(false)}
+        onClose={() => {
+          setIsRenameModalOpen(false);
+          setSelectedItem(null);
+        }}
         onConfirm={handleRenameConfirm}
         currentName={selectedItem?.name || ''}
         title={`Rename ${selectedItem?.type === 'case' ? 'Case' : 'Chat'}`}
         placeholder="Enter new name"
       />
 
-      <ConfirmationModal
-        isOpen={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
-        onConfirm={handleDeleteConfirm}
-        title={`Delete ${selectedItem?.type === 'case' ? 'Case' : 'Chat'}`}
-        message={`Are you sure you want to delete "${selectedItem?.name}"? This action cannot be undone.`}
-        type="danger"
-      />
+      {/* Use ConfirmationModal for both cases and chats (same simple approach) */}
+      {isDeleteModalOpen && selectedItem && (
+        <ConfirmationModal
+          key={selectedItem.id} // Key ensures clean remount
+          isOpen={isDeleteModalOpen}
+          onClose={() => {
+            setIsDeleteModalOpen(false);
+            setSelectedItem(null);
+            setDeleteChatsOption(false);
+          }}
+          onConfirm={handleDeleteConfirm}
+          title={selectedItem.type === 'case' ? 'Delete Case' : 'Delete Chat'}
+          message={`Are you sure you want to delete "${selectedItem.name}"? This action cannot be undone.`}
+          type="danger"
+          linkedChats={selectedItem.type === 'case' && linkedChatsForCase.length > 0 ? linkedChatsForCase : undefined}
+          onDeleteChatsOption={selectedItem.type === 'case' && linkedChatsForCase.length > 0 ? setDeleteChatsOption : undefined}
+          selectedDeleteOption={selectedItem.type === 'case' && linkedChatsForCase.length > 0 ? deleteChatsOption : undefined}
+        />
+      )}
 
       <LinkUnlinkModal
         isOpen={isLinkModalOpen}
-        onClose={() => setIsLinkModalOpen(false)}
+        onClose={() => {
+          setIsLinkModalOpen(false);
+          setSelectedItem(null);
+        }}
         onConfirm={handleLinkConfirm}
         currentLinkedCaseId={selectedItem?.type === 'chat' ? chats.find(c => c.id === selectedItem.id)?.linkedCaseId || null : null}
         cases={cases || []}
