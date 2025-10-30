@@ -22,12 +22,8 @@ export default function RightPanel({ isCollapsed, onToggleCollapse, onProgressUp
   // Get current case data
   const currentCase = selectedCaseId ? cases.find(c => c.id === selectedCaseId) : null;
   
-  // Auto-switch to case workspace when case is selected
-  useEffect(() => {
-    if (selectedCaseId && workspaceMode === 'general') {
-      setWorkspaceMode('case');
-    }
-  }, [selectedCaseId, workspaceMode, setWorkspaceMode]);
+  // Note: Do not auto-switch workspaces on case selection.
+  // Keep the user's chosen workspace mode until they explicitly switch.
 
   const handleSwitchToGeneral = () => {
     setWorkspaceMode('general');

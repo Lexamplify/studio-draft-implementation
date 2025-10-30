@@ -59,6 +59,16 @@ export default function MainChatWindow({ chatId, onReopenWorkspace, setLoadingCh
   // Get the case from the chat's linkedCaseId, not from selectedCaseId
   const currentCase = cases.find(case_ => case_.id === currentChat?.linkedCaseId);
 
+  // Keep selectedCaseId in sync with the currently open chat's linked case
+  useEffect(() => {
+    if (currentChat?.linkedCaseId) {
+      setSelectedCaseId(currentChat.linkedCaseId);
+    } else {
+      // When opening a general chat, clear selected case to enable General workspace controls
+      setSelectedCaseId(null);
+    }
+  }, [currentChat?.linkedCaseId]);
+
   useEffect(() => {
     // Load chat messages when chatId changes
     if (chatId) {

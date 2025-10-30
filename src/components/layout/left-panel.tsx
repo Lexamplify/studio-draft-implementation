@@ -28,7 +28,7 @@ interface LeftPanelProps {
 }
 
 export default function LeftPanel({ isCollapsed, onToggleCollapse, loadingChatId: propLoadingChatId, setLoadingChatId: propSetLoadingChatId }: LeftPanelProps) {
-  const { activeView, setActiveView, selectedChatId, setSelectedChatId, selectedCaseId, setSelectedCaseId } = useAppContext();
+  const { activeView, setActiveView, selectedChatId, setSelectedChatId, selectedCaseId, setSelectedCaseId, workspaceMode, setWorkspaceMode } = useAppContext();
   const { cases, updateCase, deleteCase, loading: casesLoading } = useCases();
   const { chats, updateChat, deleteChat, refetch: refetchChats, loading: chatsLoading } = useChats();
   const { user } = useFirebaseUser();
@@ -104,10 +104,16 @@ export default function LeftPanel({ isCollapsed, onToggleCollapse, loadingChatId
       setSelectedCaseId(id);
       setSelectedChatId(null); // Clear chat selection when viewing case
       setActiveView('caseDetailView');
+      // Switch right panel to Case workspace when a case is selected
+      setWorkspaceMode('case');
     } else {
       setSelectedChatId(id);
-      setSelectedCaseId(null); // Clear case selection when viewing chat
+      // If this chat is linked to a case, reflect it in selectedCaseId for right-panel context button
+      const linked = chats.find(c => c.id === id)?.linkedCaseId || null;
+      setSelectedCaseId(linked ?? null);
       setActiveView('chatView');
+      // Ensure right panel shows General workspace when a chat is selected
+      setWorkspaceMode('general');
     }
   };
 

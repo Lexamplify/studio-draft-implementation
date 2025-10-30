@@ -75,7 +75,7 @@ export async function POST(
 
     const { chatId } = await params;
     const body = await req.json();
-    const { role, content, files } = body;
+    const { role, content, files, attachments, caseData, actionType } = body;
 
     if (!role || !content) {
       return NextResponse.json({ error: 'Role and content are required' }, { status: 400 });
@@ -86,12 +86,20 @@ export async function POST(
     }
 
     // Add message to chat
-    const messageData = {
+    const messageData: any = {
       role,
       content,
-      files: files || [],
+      files: files || attachments || [],
       timestamp: new Date()
     };
+
+    // Persist optional structured fields used by UI (e.g., CaseBox rendering)
+    if (caseData) {
+      messageData.caseData = caseData;
+    }
+    if (actionType) {
+      messageData.actionType = actionType;
+    }
 
     const messageRef = await db
       .collection('users')
