@@ -90,7 +90,7 @@ const SecuritySection = () => {
           ))}
         </div>
 
-        {/* Certification Badges */}
+        {/* Certification Badges
         <div className="bg-slate-900 text-white rounded-3xl p-12 shadow-2xl animate-fade-in animation-delay-600">
           <div className="text-center mb-12">
             <div className="flex items-center justify-center gap-2 mb-4">
@@ -102,7 +102,7 @@ const SecuritySection = () => {
             </p>
           </div>
           
-          {/* <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {certifications.map((cert, index) => (
               <div
                 key={index}
@@ -112,8 +112,8 @@ const SecuritySection = () => {
                 <div className="text-sm text-green-400 font-medium">{cert.status}</div>
               </div>
             ))}
-          </div> */}
-        </div>
+          </div>
+        </div> */}
 
         {/* Security Highlights */}
         <div className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-8 animate-fade-in animation-delay-900">
