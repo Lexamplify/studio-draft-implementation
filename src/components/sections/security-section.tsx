@@ -102,7 +102,7 @@ const SecuritySection = () => {
             </p>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          {/* <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {certifications.map((cert, index) => (
               <div
                 key={index}
@@ -112,7 +112,7 @@ const SecuritySection = () => {
                 <div className="text-sm text-green-400 font-medium">{cert.status}</div>
               </div>
             ))}
-          </div>
+          </div> */}
         </div>
 
         {/* Security Highlights */}
