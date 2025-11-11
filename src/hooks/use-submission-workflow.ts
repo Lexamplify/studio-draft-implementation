@@ -280,9 +280,13 @@ async function readFileContent(file: File): Promise<string> {
       const { parseDocument } = await import('@/lib/document-parser');
       const parsed = await parseDocument(file);
       
-      // Return the extracted content
+      // Return the extracted content (truncate to avoid model/token limits)
       if (parsed.content && parsed.content.trim().length > 0) {
-        return parsed.content;
+        const MAX_CHARS = 30000; // ~30k chars safeguard
+        const content = parsed.content.length > MAX_CHARS
+          ? `${parsed.content.slice(0, MAX_CHARS)}\n\n[Truncated to ${MAX_CHARS} characters for processing]`
+          : parsed.content;
+        return content;
       } else {
         throw new Error('Empty content extracted');
       }

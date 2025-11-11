@@ -2,20 +2,13 @@
 'use client';
 import Link from 'next/link';
 import LexamplifyLogo from '@/components/lexamplify-logo';
-import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isLoginLoading, setIsLoginLoading] = useState(false);
 
   const handleLinkClick = () => {
     setIsMobileMenuOpen(false);
-  };
-
-  const handleLoginClick = () => {
-    setIsLoginLoading(true);
-    // The navigation will happen automatically via the Link component
   };
 
   return (
@@ -26,19 +19,9 @@ const Header = () => {
         </Link>
 
         <nav className="hidden md:flex gap-4 items-center">
-          {/* <Link 
-            href="/login" 
-            className={`px-5 py-2 rounded-full bg-primary text-white text-sm hover:bg-primary/90 transition-colors flex items-center gap-2 ${isLoginLoading ? 'opacity-75 cursor-not-allowed' : ''}`} 
-            onClick={(e) => {
-              handleLoginClick();
-              handleLinkClick();
-            }}
-          >
-            {isLoginLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-            Login
-          </Link> */}
-          <Link href="#contact"             className={`px-5 py-2 rounded-full bg-primary text-white text-sm hover:bg-primary/90 transition-colors flex items-center gap-2 ${isLoginLoading ? 'opacity-75 cursor-not-allowed' : ''}`} 
- onClick={handleLinkClick}>Get in Touch</Link>
+          <Link href="#contact" className="px-5 py-2 rounded-full bg-primary text-white text-sm hover:bg-primary/90 transition-colors flex items-center gap-2" onClick={handleLinkClick}>
+            Get in Touch
+          </Link>
         </nav>
 
         {/* Mobile menu can be kept for future use or removed if not needed */}

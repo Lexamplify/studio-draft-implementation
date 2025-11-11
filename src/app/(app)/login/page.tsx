@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged /*, createUserWithEmailAndPassword */ } from "firebase/auth";
+import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "firebase/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Icons } from "@/components/icons";
@@ -16,7 +16,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  // const [isSignUp, setIsSignUp] = useState(false); // Signup disabled
 
   useEffect(() => {
     // Initialize debug logging
@@ -89,64 +88,6 @@ export default function LoginPage() {
     } 
   };
 
-  // Signup functionality disabled
-  // const handleEmailSignUp = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   setLoading(true);
-  //   setError(null);
-  //   try {
-  //     console.log("Attempting email signup for:", email);
-  //     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-  //     console.log("Email signup successful");
-  //     
-  //     // Store authentication info for editor access
-  //     if (userCredential.user) {
-  //       const authData = {
-  //         isAuthenticated: true,
-  //         user: {
-  //           email: userCredential.user.email,
-  //           uid: userCredential.user.uid,
-  //           displayName: userCredential.user.displayName
-  //         },
-  //         loginTime: Date.now(),
-  //         loginMethod: 'email_signup'
-  //       };
-  //       localStorage.setItem('mainWebsiteAuth', JSON.stringify(authData));
-  //       console.log('✅ Main website email signup success - Auth data stored for editor:', authData);
-  //     }
-  //     
-  //     router.replace("/assistant");
-  //   } catch (err: unknown) {
-  //     console.error("Signup error:", err);
-  //     
-  //     // Store error info for editor access
-  //     const errorMessage = err instanceof FirebaseError ? err.message : 
-  //                         err instanceof Error ? err.message : 
-  //                         "Sign up failed";
-  //     
-  //     const errorData = {
-  //       hasError: true,
-  //       errorMessage,
-  //       errorTime: Date.now(),
-  //       errorType: 'email_signup'
-  //     };
-  //     localStorage.setItem('mainWebsiteAuthError', JSON.stringify(errorData));
-  //     console.log('❌ Main website email signup failure - Error data stored for editor:', errorData);
-  //     
-  //     if (err instanceof FirebaseError) {setError(err.message);
-  //       setLoading(false);
-
-  //     }
-  //     else if (err instanceof Error) {setError(err.message);
-  //       setLoading(false);
-
-  //     }
-  //     else {setError("Sign up failed");
-  //       setLoading(false);
-
-  //     }
-  //   } 
-  // };
 
   const handleGoogleLogin = async () => {
     setLoading(true);
@@ -248,7 +189,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="w-full max-w-md p-8 rounded-lg shadow-lg bg-white border">
-        <h1 className="text-2xl font-bold mb-6 text-center">Sign in to Lexamplify</h1>
+        <h1 className="text-2xl font-bold mb-6 text-center">Sign in to LegalEase</h1>
         <form onSubmit={handleEmailLogin} className="space-y-4">
           <Input
             type="email"
@@ -282,22 +223,6 @@ export default function LoginPage() {
         >
           <Icons.Google className="h-5 w-5" /> Sign in with Google
         </Button>
-        {/* Signup functionality disabled */}
-        {/* <div className="mt-4 text-center">
-          {isSignUp ? (
-            <span className="text-sm">Already have an account?{' '}
-              <button type="button" className="text-primary underline" onClick={() => { setIsSignUp(false); setError(null); }}>
-                Sign in
-              </button>
-            </span>
-          ) : (
-            <span className="text-sm">Don&apos;t have an account?{' '}
-              <button type="button" className="text-primary underline" onClick={() => { setIsSignUp(true); setError(null); }}>
-                Sign up
-              </button>
-            </span>
-          )}
-        </div> */}
       </div>
     </div>
   );

@@ -12,7 +12,8 @@ import { createCaseTool } from '@/ai/tools/case-tools';
 const legalChatPrompt = ai.definePrompt({
   name: 'legalChatPrompt',
   input: { schema: ChatInputSchema },
-  output: { schema: ChatOutputSchema },
+  // Use lenient schema to avoid hard validation failures from the model
+  output: { schema: z.any() },
   prompt: `You are **LexAI**, a specialized legal assistant for the Indian legal system. You help legal professionals with case analysis, document review, legal research, and general legal guidance.
 
 **Core Guidelines:**
@@ -102,14 +103,15 @@ When a user uploads a case document (like a writ petition, FIR, complaint, etc.)
   - A legal case document is uploaded and user wants to proceed
   - Document analysis reveals case details and user confirms creation
 
-Respond with a comprehensive, helpful legal analysis:`,
+\n\nCRITICAL OUTPUT FORMAT:\n- Return ONLY a valid JSON object that matches this structure (no markdown, no prose outside JSON):\n{\n  "response": "string",\n  "suggestions": ["string", "string"]\n}\n- The \"response\" field is REQUIRED and must be a helpful answer.\n- You may include optional fields like \"citations\", \"actionType\", and \"caseData\" if relevant.\n`,
 });
 
 // Case-scoped legal assistant prompt (FLOW 2)
 const caseScopedChatPrompt = ai.definePrompt({
   name: 'caseScopedChatPrompt',
   input: { schema: ChatInputSchema },
-  output: { schema: ChatOutputSchema },
+  // Use lenient schema to avoid hard validation failures from the model
+  output: { schema: z.any() },
   prompt: `You are LexAI, an expert senior legal paralegal. Your user is a lawyer who is also an expert.
 
 **IMPORTANT: PERSONA & GOAL**
@@ -319,6 +321,26 @@ const chatFlow = ai.defineFlow(
       // Check if this is a case-scoped chat
       const isCaseScoped = !!input.context?.caseId;
       
+      // Helper to coerce model output to ChatOutput shape
+      const normalizeOutput = (raw: any): ChatOutput => {
+        try {
+          if (!raw) {
+            return { response: 'I apologize, but I encountered an issue processing your message.', suggestions: [] } as ChatOutput;
+          }
+          if (typeof raw === 'string') {
+            return { response: raw, suggestions: [] } as ChatOutput;
+          }
+          if (typeof raw === 'object' && typeof raw.response === 'string') {
+            return raw as ChatOutput;
+          }
+          // Some models return { text: '...' }
+          if (typeof raw.text === 'string') {
+            return { response: raw.text, suggestions: [] } as ChatOutput;
+          }
+        } catch {}
+        return { response: 'I apologize, but I encountered an issue processing your message.', suggestions: [] } as ChatOutput;
+      };
+      
       if (isCaseScoped) {
         console.log('[Chat Flow] Using case-scoped prompt for case:', input.context.caseId);
         // Use case-scoped prompt without calendar tools (AI will propose actions instead)
@@ -331,12 +353,8 @@ const chatFlow = ai.defineFlow(
           // No tools - AI must propose calendar actions instead of calling tools
         });
 
-        const output = response.output || {
-          response: "I apologize, but I encountered an issue processing your message. Please try again.",
-          suggestions: ["Could you rephrase your question?", "Would you like to upload a document for analysis?"]
-        };
-
-        return output;
+        const coerced = normalizeOutput(response.output);
+        return coerced;
       } else {
         console.log('[Chat Flow] Using general legal chat prompt');
         // Use the legal chat prompt with calendar tools
@@ -405,10 +423,7 @@ const chatFlow = ai.defineFlow(
         console.log('[Chat Flow] No tool calls found in response');
       }
 
-      const output = response.output || {
-        response: "I apologize, but I encountered an issue processing your message. Please try again.",
-        suggestions: ["Could you rephrase your question?", "Would you like to upload a document for analysis?"]
-      };
+      const output = normalizeOutput(response.output);
 
       // Add case data to output if tool was used
       if (caseData) {

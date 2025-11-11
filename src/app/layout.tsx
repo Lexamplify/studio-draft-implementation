@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import { NuqsAdapter } from 'nuqs/adapters/next/app';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -29,8 +30,10 @@ export default function RootLayout({
     <GoogleOAuthProvider clientId={clientId ?? ''}>
       <html lang="en" suppressHydrationWarning>
         <body className={`${inter.variable} font-sans antialiased`}> {/* Apply Inter font variable and Tailwind's font-sans utility */}
-          {children}
-          <Toaster />
+          <NuqsAdapter>
+            {children}
+            <Toaster />
+          </NuqsAdapter>
         </body>
       </html>
     </GoogleOAuthProvider>

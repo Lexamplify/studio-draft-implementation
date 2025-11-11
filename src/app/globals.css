@@ -125,3 +125,166 @@ h1, h2, h3, h4, h5, h6 {
 }
 .animate-fade-in { animation: fade-in 0.8s ease-out forwards; }
 .animate-slide-in-up { animation: slide-in-up 0.8s ease-out forwards; }
+
+/* Liveblocks Collaboration Cursor Styles - Popup instead of inline text */
+
+/* Hide collaboration cursor text labels */
+.tiptap [data-collaboration-cursor] > span,
+.tiptap .collaboration-cursor > span,
+.tiptap span[data-user],
+.tiptap [class*="collaboration-cursor"] > span,
+.tiptap .collaboration-cursor__label,
+.collaboration-cursor__label {
+  display: none !important;
+  visibility: hidden !important;
+  font-size: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  text-indent: -9999px !important;
+  opacity: 0 !important;
+  color: transparent !important;
+}
+
+/* Style the cursor container as a thin line */
+.tiptap [data-collaboration-cursor],
+.tiptap .collaboration-cursor,
+.tiptap span[data-user],
+.tiptap [class*="collaboration-cursor"],
+.tiptap .collaboration-cursor__caret,
+.collaboration-cursor__caret {
+  position: relative;
+  display: inline-block;
+  width: 2px !important;
+  min-width: 2px !important;
+  height: 1.2em !important;
+  vertical-align: baseline;
+  margin: 0 1px;
+  background-color: transparent !important;
+  border-left: 2px solid;
+  border-radius: 0;
+  padding: 0 !important;
+  line-height: inherit;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+/* Hide any background highlighting */
+.tiptap [data-collaboration-cursor],
+.tiptap .collaboration-cursor,
+.tiptap span[data-user],
+.tiptap [class*="collaboration-cursor"] {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* Tooltip styling */
+.tiptap [data-collaboration-cursor]::after,
+.tiptap .collaboration-cursor::after,
+.tiptap span[data-user]::after,
+.tiptap [class*="collaboration-cursor"]::after,
+.tiptap .collaboration-cursor__caret::after,
+.collaboration-cursor__caret::after,
+[data-username]::after,
+[data-user-name]::after {
+  content: attr(data-username);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 4px;
+  padding: 4px 8px;
+  background-color: #1a1a1a;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  border-radius: 4px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Fallback if data-username is empty, try data-user-name */
+[data-user-name]:not([data-username])::after {
+  content: attr(data-user-name);
+}
+
+/* Tooltip arrow */
+.tiptap [data-collaboration-cursor]::before,
+.tiptap .collaboration-cursor::before,
+.tiptap span[data-user]::before,
+.tiptap [class*="collaboration-cursor"]::before,
+.tiptap .collaboration-cursor__caret::before,
+.collaboration-cursor__caret::before,
+[data-username]::before,
+[data-user-name]::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: -2px;
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 4px solid #1a1a1a;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out;
+  z-index: 1001;
+}
+
+/* Show tooltip on hover */
+.tiptap [data-collaboration-cursor]:hover::after,
+.tiptap .collaboration-cursor:hover::after,
+.tiptap span[data-user]:hover::after,
+.tiptap [class*="collaboration-cursor"]:hover::after,
+.tiptap .collaboration-cursor__caret:hover::after,
+.collaboration-cursor__caret:hover::after,
+[data-username]:hover::after,
+[data-user-name]:hover::after,
+[data-cursor-processed="true"]:hover::after {
+  opacity: 1 !important;
+}
+
+.tiptap [data-collaboration-cursor]:hover::before,
+.tiptap .collaboration-cursor:hover::before,
+.tiptap span[data-user]:hover::before,
+.tiptap [class*="collaboration-cursor"]:hover::before,
+.tiptap .collaboration-cursor__caret:hover::before,
+.collaboration-cursor__caret:hover::before,
+[data-username]:hover::before,
+[data-user-name]:hover::before,
+[data-cursor-processed="true"]:hover::before {
+  opacity: 1 !important;
+}
+
+/* Universal tooltip for any element with data-username */
+[data-username]:not(:empty):hover::after,
+[data-user-name]:not(:empty):hover::after {
+  content: attr(data-username) !important;
+  position: absolute !important;
+  bottom: 100% !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  margin-bottom: 4px !important;
+  padding: 4px 8px !important;
+  background-color: #1a1a1a !important;
+  color: #ffffff !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  white-space: nowrap !important;
+  border-radius: 4px !important;
+  opacity: 1 !important;
+  pointer-events: none !important;
+  z-index: 10000 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+[data-user-name]:not([data-username]):not(:empty):hover::after {
+  content: attr(data-user-name) !important;
+}

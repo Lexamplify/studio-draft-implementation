@@ -65,7 +65,7 @@ const AlternatingFeaturesSection = () => {
                 <h3 className="font-serif text-3xl lg:text-4xl font-bold mb-6 text-foreground leading-tight">Strategic Case Management</h3>
                 <p className="text-xl text-muted-foreground leading-relaxed">Organize case files, track deadlines, and manage client communication effortlessly. Lexamplify provides a centralized hub for all your case-related activities, ensuring nothing falls through the cracks.</p>
               </div>
-              <div className="bg-white rounded-xl w-full flex items-center justify-center p-4">
+              <div className="bg-muted rounded-xl w-full flex items-center justify-center p-4">
                 <div className="relative w-full h-72 md:h-96 lg:h-[520px]">
                   <Image src="/Images/Organized_Workflow (1).png" alt="Organized Workflow" fill className="object-contain rounded-xl" />
                 </div>

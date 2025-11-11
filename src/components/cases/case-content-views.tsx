@@ -1,15 +1,283 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Icon } from '@/components/ui/icon';
 import DragDropUpload from '@/components/ui/drag-drop-upload';
 import { uploadMultipleFiles, UploadedFile } from '@/lib/firebase-storage';
 import { useAppContext } from '@/context/app-context';
 import { useChats } from '@/context/chats-context';
 import { apiClient } from '@/lib/api-client';
+import { TemplatesGallery } from '@/components/templates/templates-gallery';
+import { createDocument, listDocuments, Document } from '@/lib/firebase-document-service';
+import { toast } from 'sonner';
+import { useFirebaseUser } from '@/hooks/use-firebase-user';
 
-// Case Documents View
+// Case Documents View - Shows documents inline (using same implementation as page.tsx)
 export function CaseDocumentsView() {
+  const { selectedCaseId } = useAppContext();
+  const { user, loading: userLoading } = useFirebaseUser();
+  
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isCreating, setIsCreating] = useState(false);
+  const lastLoadKey = useRef<string>('');
+  const isLoadingRef = useRef(false);
+
+  const caseId = selectedCaseId;
+  const userId = user?.uid || '';
+
+  // Load documents for this case
+  useEffect(() => {
+    // Don't run if user is still loading or if already loading
+    if (userLoading || isLoadingRef.current) {
+      return;
+    }
+
+    // Don't run if no case or user
+    if (!caseId || !userId) {
+      setDocuments(prev => prev.length > 0 ? [] : prev);
+      setIsLoading(false);
+      return;
+    }
+
+    // Create a unique key for this case/user combination
+    const loadKey = `${caseId}-${userId}`;
+    
+    // Skip if we've already loaded for this combination
+    if (lastLoadKey.current === loadKey) {
+      setIsLoading(false);
+      return;
+    }
+
+    const loadDocuments = async (retryCount = 0) => {
+      // Prevent concurrent loads
+      if (isLoadingRef.current) {
+        return;
+      }
+
+      isLoadingRef.current = true;
+      
+      try {
+        setIsLoading(true);
+        // Add timeout wrapper for Firestore queries
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Request timeout')), 15000); // 15 second timeout
+        });
+        
+        const docsPromise = listDocuments(caseId, userId);
+        const docs = await Promise.race([docsPromise, timeoutPromise]) as Document[];
+        setDocuments(docs);
+        lastLoadKey.current = loadKey;
+      } catch (error: any) {
+        console.error('Failed to load documents:', error);
+        
+        // Retry logic for timeout/network errors
+        if (retryCount < 2 && (error?.message?.includes('timeout') || error?.message?.includes('Could not reach'))) {
+          console.log(`Retrying document load (attempt ${retryCount + 1}/2)...`);
+          isLoadingRef.current = false; // Allow retry
+          // Wait a bit before retrying
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          return loadDocuments(retryCount + 1);
+        }
+        
+        // Only show error toast if it's not a timeout (timeout might be temporary)
+        if (!error?.message?.includes('timeout') && !error?.message?.includes('Could not reach')) {
+          toast.error('Failed to load documents');
+        } else {
+          // For timeout, show a less alarming message
+          toast.error('Loading documents is taking longer than expected. Please check your connection.');
+        }
+        
+        // On error, clear the load key so it can retry on next case selection
+        lastLoadKey.current = '';
+        // Keep existing documents if available, only clear if this was the first load
+        setDocuments(prev => prev.length > 0 ? prev : []);
+      } finally {
+        setIsLoading(false);
+        isLoadingRef.current = false;
+      }
+    };
+
+    loadDocuments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [caseId, userId]); // Only depend on caseId and userId, not userLoading
+
+  // Handle template selection - create a new document
+  const handleTemplateSelect = async (template: {
+    id: string;
+    label: string;
+    imageUrl: string;
+    initialContent: string | object;
+    queries?: string[];
+  }) => {
+    if (!user) {
+      toast.error('Please sign in to create documents');
+      return;
+    }
+
+    if (!caseId) {
+      toast.error('No case selected');
+      return;
+    }
+
+    try {
+      setIsCreating(true);
+      
+      const contentForFirestore = typeof template.initialContent === 'string' 
+        ? template.initialContent 
+        : JSON.stringify(template.initialContent);
+      
+      const documentId = await createDocument(
+        caseId,
+        user.uid,
+        template.label,
+        contentForFirestore
+      );
+      
+      // Reload documents (reset load key to allow reload)
+      lastLoadKey.current = '';
+      const docs = await listDocuments(caseId, user.uid);
+      setDocuments(docs);
+      lastLoadKey.current = `${caseId}-${user.uid}`;
+      
+      // Open the new document in editor in a new tab
+      // Pass caseId as query parameter to ensure case data is available
+      const url = caseId 
+        ? `/editor/${documentId}?caseId=${caseId}`
+        : `/editor/${documentId}`;
+      window.open(url, '_blank');
+    } catch (error) {
+      console.error('Error creating document:', error);
+      toast.error('Failed to create document. Please check Firestore security rules.');
+      throw error;
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleDocumentClick = (docId: string) => {
+    // Open directly in editor in a new tab when clicking on document
+    // Pass caseId as query parameter to ensure case data is available
+    const url = caseId 
+      ? `/editor/${docId}?caseId=${caseId}`
+      : `/editor/${docId}`;
+    window.open(url, '_blank');
+  };
+
+  const formatDate = (date: Date) => {
+    return new Date(date).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  // Show loading if user is not yet loaded
+  if (userLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <span className="ml-3 text-gray-600">Loading...</span>
+      </div>
+    );
+  }
+
+  // Show message if user is not authenticated
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <Icon name="lock" className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Authentication Required</h3>
+          <p className="text-gray-500">Please sign in to view and create documents</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-full bg-gray-50">
+      {/* Template Gallery */}
+      <div className="flex-shrink-0">
+        <TemplatesGallery 
+          onTemplateSelect={handleTemplateSelect}
+          isCreating={isCreating}
+        />
+      </div>
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex gap-6 p-6 overflow-hidden">
+        {/* Left Panel - User Documents */}
+        <div className="w-80 flex-shrink-0">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm h-full flex flex-col">
+            <div className="p-5 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-800 flex items-center">
+                <Icon name="fileLines" className="w-5 h-5 text-blue-500 mr-2" />
+                Your Documents
+              </h3>
+              <p className="text-sm text-gray-500 mt-1">
+                {documents.length} document{documents.length !== 1 ? 's' : ''}
+              </p>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-4">
+              {isLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              ) : documents.length === 0 ? (
+                <div className="text-center py-12">
+                  <Icon name="fileLines" className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <h4 className="text-lg font-medium text-gray-500 mb-2">No documents yet</h4>
+                  <p className="text-gray-400 text-sm">Create a document from a template above</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {documents.map((doc) => (
+                    <div
+                      key={doc.id}
+                      onClick={() => handleDocumentClick(doc.id)}
+                      className="w-full text-left p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-gray-50 transition-all cursor-pointer"
+                    >
+                      <div className="flex items-start gap-3">
+                        <Icon 
+                          name="fileText" 
+                          className="w-5 h-5 mt-0.5 text-gray-400"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-gray-800 truncate">{doc.title}</h4>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Updated {formatDate(doc.updatedAt)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Right Panel - Placeholder */}
+        <div className="flex-1">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm h-full flex flex-col">
+            <div className="flex-1 flex items-center justify-center text-gray-500">
+              <div className="text-center">
+                <Icon name="fileSearch" className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <h4 className="text-lg font-medium text-gray-500 mb-2">Click a document to open in editor</h4>
+                <p className="text-gray-400">Documents open in a new tab for editing</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Case Documents View OLD (keeping for reference, can be removed later)
+export function CaseDocumentsViewOLD() {
   const { selectedCaseId } = useAppContext();
   const [documents, setDocuments] = useState<UploadedFile[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -275,7 +543,7 @@ export function CaseDocumentsView() {
         {documents.length === 0 ? (
           <div className="text-center py-12">
             <Icon name="folder" className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h4 className="text-lg font-medium text-gray-500 mb-2">No documents uploaded</h4>
+            <h4 className="text-lg font-medium text-gray-500 mb-2">Nooo documents uploaded</h4>
             <p className="text-gray-400">Drag and drop files above to get started with your case documents</p>
           </div>
         ) : filteredDocuments.length > 0 ? (
