@@ -79,6 +79,7 @@ initializeFirebaseAdmin();
 
 // Export Firebase services with error handling
 export const auth = admin.auth();
+export const adminAuth = admin.auth(); // Alias for compatibility
 export const db = admin.firestore();
 export const storage = admin.storage();
 

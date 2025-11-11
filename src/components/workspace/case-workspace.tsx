@@ -21,6 +21,13 @@ export default function CaseWorkspace({
 }: CaseWorkspaceProps) {
   const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  console.log('[CaseWorkspace] Render', {
+    caseId,
+    caseName,
+    hasOnProgressUpdate: !!onProgressUpdate,
+    onProgressUpdateRef: onProgressUpdate?.toString().substring(0, 50)
+  });
 
   // Load case-specific events
   useEffect(() => {

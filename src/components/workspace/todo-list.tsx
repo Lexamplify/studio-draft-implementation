@@ -35,11 +35,19 @@ export default function TodoList({ caseId, onProgressUpdate }: TodoListProps) {
 
   // Update progress when todos change
   useEffect(() => {
+    console.log('[TodoList] Progress update effect triggered', {
+      todosCount: todos.length,
+      hasOnProgressUpdate: !!onProgressUpdate,
+      onProgressUpdateRef: onProgressUpdate?.toString().substring(0, 50)
+    });
+    
     if (onProgressUpdate) {
       const completed = todos.filter(todo => todo.completed).length;
-      onProgressUpdate(completed, todos.length);
+      const total = todos.length;
+      console.log('[TodoList] Calling onProgressUpdate', { completed, total });
+      onProgressUpdate(completed, total);
     }
-  }, [todos, onProgressUpdate]);
+  }, [todos]); // Removed onProgressUpdate from deps to prevent infinite loop
 
   const handleAddTodo = async () => {
     if (!newTodoText.trim()) return;
