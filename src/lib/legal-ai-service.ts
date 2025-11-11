@@ -220,7 +220,7 @@ REMINDER: Your response MUST start with {"type": "doc", "content": [ and end wit
    * Call Gemini AI service for legal document processing
    */
   private static async callLegalAI(prompt: string): Promise<any> {
-    const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || 'AIzaSyC79l8T4LyP20FffHOYr6K1oY1NViwDQ0Q';
+    const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY ;
     
     // Try multiple model configurations in order of preference
     const modelConfigs = [

@@ -19,7 +19,7 @@ export interface TemplateCustomizationResponse {
 }
 
 export class TemplateAIService {
-  private static readonly GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || 'AIzaSyC79l8T4LyP20FffHOYr6K1oY1NViwDQ0Q';
+  private static readonly GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY ;
   private static readonly GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/AIzaSyAECbWYM3dL9AEoWPfethazjVJDjVHeUu4-1.5-flash:generateContent?key=${this.GEMINI_API_KEY}`;
 
   /**
