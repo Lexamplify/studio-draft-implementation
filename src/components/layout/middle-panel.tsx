@@ -669,29 +669,29 @@ export default function MiddlePanel({ chatId, setLoadingChatId, onTaskProgressUp
                         {currentChat.title || 'Untitled Chat'}
                       </p>
                     </div>
-                    <Button
+                    <button
                       onClick={handleViewCase}
-                      variant="outline"
-                      size="sm"
-                      className="font-medium flex-shrink-0"
+                      className="w-10 h-10 bg-white rounded-lg shadow-md flex items-center justify-center hover:bg-gray-100 transition-colors border border-gray-200 flex-shrink-0"
+                      title="View Case"
+                      aria-label="View Case"
                     >
-                      View Case
-                    </Button>
+                      <Icon name="externalLink" className="w-5 h-5 text-gray-700" />
+                    </button>
                   </>
                 ) : (
                   // Show chat name when not linked to a case
                   <>
-                    <h2 className="text-lg font-medium text-gray-900 truncate max-w-[calc(100%-120px)]" title={currentChat.title || 'Untitled Chat'}>
+                    <h2 className="text-lg font-medium text-gray-900 truncate flex-1 min-w-0 text-center" title={currentChat.title || 'Untitled Chat'}>
                       {currentChat.title || 'Untitled Chat'}
                     </h2>
-                    <Button
+                    <button
                       onClick={() => setIsLinkModalOpen(true)}
-                      variant="outline"
-                      size="sm"
-                      className="font-medium flex-shrink-0"
+                      className="w-10 h-10 bg-white rounded-lg shadow-md flex items-center justify-center hover:bg-gray-100 transition-colors border border-gray-200 flex-shrink-0"
+                      title="Link to Case"
+                      aria-label="Link to Case"
                     >
-                      Link to Case
-                    </Button>
+                      <Icon name="link" className="w-5 h-5 text-gray-700" />
+                    </button>
                   </>
                 )}
               </div>
@@ -771,29 +771,29 @@ export default function MiddlePanel({ chatId, setLoadingChatId, onTaskProgressUp
                       {currentChat.title || 'Untitled Chat'}
                     </p>
                   </div>
-                  <Button
+                  <button
                     onClick={handleViewCase}
-                    variant="outline"
-                    size="sm"
-                    className="font-medium flex-shrink-0"
+                    className="w-10 h-10 bg-white rounded-lg shadow-md flex items-center justify-center hover:bg-gray-100 transition-colors border border-gray-200 flex-shrink-0"
+                    title="View Case"
+                    aria-label="View Case"
                   >
-                    View Case
-                  </Button>
+                    <Icon name="externalLink" className="w-5 h-5 text-gray-700" />
+                  </button>
                 </>
               ) : (
                 // Show chat name when not linked to a case
                 <>
-                  <h2 className="text-lg font-medium text-gray-900 truncate max-w-[calc(100%-120px)]" title={currentChat.title || 'Untitled Chat'}>
+                  <h2 className="text-lg font-medium text-gray-900 truncate flex-1 min-w-0 text-center" title={currentChat.title || 'Untitled Chat'}>
                     {currentChat.title || 'Untitled Chat'}
                   </h2>
-                  <Button
+                  <button
                     onClick={() => setIsLinkModalOpen(true)}
-                    variant="outline"
-                    size="sm"
-                    className="font-medium flex-shrink-0"
+                    className="w-10 h-10 bg-white rounded-lg shadow-md flex items-center justify-center hover:bg-gray-100 transition-colors border border-gray-200 flex-shrink-0"
+                    title="Link to Case"
+                    aria-label="Link to Case"
                   >
-                    Link to Case
-                  </Button>
+                    <Icon name="link" className="w-5 h-5 text-gray-700" />
+                  </button>
                 </>
               )}
             </div>

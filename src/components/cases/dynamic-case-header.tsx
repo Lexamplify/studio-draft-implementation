@@ -69,26 +69,34 @@ export default function DynamicCaseHeader({ isShrunken, hideDetails, hideDescrip
       )}
 
       {/* Section 2: Case Title - STICKY (Always visible) */}
-      <div className="sticky top-0 z-30 bg-white px-4 sm:px-6 lg:px-8 py-3 sm:py-4 lg:py-6 border-b border-gray-200">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <h2 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 break-words">{caseName}</h2>
-            {/* AI-Generated Subtitle */}
-            <p className="mt-1 sm:mt-2 text-xs sm:text-sm lg:text-base text-gray-600 leading-relaxed break-words">{aiSubtitle}</p>
-            <div className="mt-2 sm:mt-3 flex flex-wrap items-center gap-2">
-              <span className={`inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                status === 'Active' ? 'bg-green-100 text-green-800' :
-                status === 'Closed' ? 'bg-gray-100 text-gray-800' :
-                status === 'On Hold' ? 'bg-yellow-100 text-yellow-800' :
-                'bg-blue-100 text-blue-800'
-              }`}>
-                {status}
-              </span>
-              <span className="text-xs sm:text-sm text-gray-500 hidden sm:inline">•</span>
-              <span className="text-xs sm:text-sm text-gray-500 truncate">{caseNumber}</span>
+      <div className="sticky top-0 z-30 bg-white px-4 sm:px-6 lg:px-8 py-3 sm:py-4 lg:py-6 border-b border-gray-200 relative">
+        <div className="flex items-start justify-center gap-3 w-full pr-12 lg:pr-0">
+          {/* Centered case name and subtitle */}
+          <div className="flex-1 flex flex-col items-center min-w-0 max-w-full">
+            <div className="w-full max-w-[calc(100%-80px)] flex flex-col items-center min-w-0">
+              <h2 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 text-center truncate w-full" title={caseName}>
+                {caseName}
+              </h2>
+              {/* AI-Generated Subtitle */}
+              <p className="mt-1 sm:mt-2 text-xs sm:text-sm lg:text-base text-gray-600 leading-relaxed text-center truncate w-full" title={aiSubtitle}>
+                {aiSubtitle}
+              </p>
+              <div className="mt-2 sm:mt-3 flex flex-wrap items-center justify-center gap-2">
+                <span className={`inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                  status === 'Active' ? 'bg-green-100 text-green-800' :
+                  status === 'Closed' ? 'bg-gray-100 text-gray-800' :
+                  status === 'On Hold' ? 'bg-yellow-100 text-yellow-800' :
+                  'bg-blue-100 text-blue-800'
+                }`}>
+                  {status}
+                </span>
+                <span className="text-xs sm:text-sm text-gray-500 hidden sm:inline">•</span>
+                <span className="text-xs sm:text-sm text-gray-500 truncate">{caseNumber}</span>
+              </div>
             </div>
           </div>
-          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+          {/* Action buttons on the right */}
+          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0 absolute right-4 sm:right-6 lg:right-8">
             <button className="p-1.5 sm:p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors" title="Share case">
               <Icon name="share" className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
