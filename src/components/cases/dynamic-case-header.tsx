@@ -69,14 +69,14 @@ export default function DynamicCaseHeader({ isShrunken, hideDetails, hideDescrip
       )}
 
       {/* Section 2: Case Title - STICKY (Always visible) */}
-      <div className="sticky top-0 z-30 bg-white px-4 sm:px-6 lg:px-8 py-4 sm:py-6 border-b border-gray-200">
-        <div className="flex items-start justify-between">
+      <div className="sticky top-0 z-30 bg-white px-4 sm:px-6 lg:px-8 py-3 sm:py-4 lg:py-6 border-b border-gray-200">
+        <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 truncate">{caseName}</h2>
+            <h2 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 break-words">{caseName}</h2>
             {/* AI-Generated Subtitle */}
-            <p className="mt-2 text-sm sm:text-base text-gray-600 leading-relaxed">{aiSubtitle}</p>
-            <div className="mt-3 flex items-center gap-2">
-              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+            <p className="mt-1 sm:mt-2 text-xs sm:text-sm lg:text-base text-gray-600 leading-relaxed break-words">{aiSubtitle}</p>
+            <div className="mt-2 sm:mt-3 flex flex-wrap items-center gap-2">
+              <span className={`inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-full text-xs font-medium ${
                 status === 'Active' ? 'bg-green-100 text-green-800' :
                 status === 'Closed' ? 'bg-gray-100 text-gray-800' :
                 status === 'On Hold' ? 'bg-yellow-100 text-yellow-800' :
@@ -84,16 +84,16 @@ export default function DynamicCaseHeader({ isShrunken, hideDetails, hideDescrip
               }`}>
                 {status}
               </span>
-              <span className="text-sm text-gray-500">•</span>
-              <span className="text-sm text-gray-500">{caseNumber}</span>
+              <span className="text-xs sm:text-sm text-gray-500 hidden sm:inline">•</span>
+              <span className="text-xs sm:text-sm text-gray-500 truncate">{caseNumber}</span>
             </div>
           </div>
-          <div className="flex items-center gap-2 ml-4">
-            <button className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors" title="Share case">
-              <Icon name="share" className="w-5 h-5" />
+          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+            <button className="p-1.5 sm:p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors" title="Share case">
+              <Icon name="share" className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
-            <button className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors" title="More options">
-              <Icon name="ellipsis" className="w-5 h-5" />
+            <button className="p-1.5 sm:p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors" title="More options">
+              <Icon name="ellipsis" className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </div>
         </div>
@@ -101,67 +101,67 @@ export default function DynamicCaseHeader({ isShrunken, hideDetails, hideDescrip
 
       {/* Section 3: Description - Hides when hideDescription is true */}
       <div className={`px-4 sm:px-6 lg:px-8 transition-all duration-500 ease-in-out ${
-        hideDescription ? 'opacity-0 max-h-0 overflow-hidden py-0' : 'opacity-100 max-h-32 py-4'
+        hideDescription ? 'opacity-0 max-h-0 overflow-hidden py-0' : 'opacity-100 max-h-32 py-3 sm:py-4'
       }`}>
-        <p className="text-gray-500 text-sm sm:text-base leading-relaxed">{summary}</p>
+        <p className="text-gray-500 text-xs sm:text-sm lg:text-base leading-relaxed break-words">{summary}</p>
       </div>
 
       {/* Section 4: Details Grid - Hides when hideDetails is true */}
       <div className={`px-4 sm:px-6 lg:px-8 transition-all duration-500 ease-in-out ${
-        hideDetails ? 'opacity-0 max-h-0 overflow-hidden py-0' : 'opacity-100 max-h-64 py-4 sm:py-6'
+        hideDetails ? 'opacity-0 max-h-0 overflow-hidden py-0' : 'opacity-100 max-h-64 py-3 sm:py-4 lg:py-6'
       }`}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 text-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 xl:gap-8 text-xs sm:text-sm">
           <div className="space-y-1">
-            <strong className="text-gray-500 font-medium block">Petitioner</strong> 
-            <span className="font-semibold text-gray-800 text-sm sm:text-base">{petitionerName}</span>
+            <strong className="text-gray-500 font-medium block text-xs sm:text-sm">Petitioner</strong> 
+            <span className="font-semibold text-gray-800 text-xs sm:text-sm lg:text-base break-words">{petitionerName}</span>
           </div>
           <div className="space-y-1">
-            <strong className="text-gray-500 font-medium block">Respondent</strong> 
-            <span className="font-semibold text-gray-800 text-sm sm:text-base">{respondentName}</span>
+            <strong className="text-gray-500 font-medium block text-xs sm:text-sm">Respondent</strong> 
+            <span className="font-semibold text-gray-800 text-xs sm:text-sm lg:text-base break-words">{respondentName}</span>
           </div>
           <div className="space-y-1">
-            <strong className="text-gray-500 font-medium block">Judge</strong> 
+            <strong className="text-gray-500 font-medium block text-xs sm:text-sm">Judge</strong> 
             <button 
-              className="font-semibold text-blue-600 hover:text-blue-800 text-sm sm:text-base hover:underline transition-colors"
+              className="font-semibold text-blue-600 hover:text-blue-800 text-xs sm:text-sm lg:text-base hover:underline transition-colors break-words text-left"
               onClick={() => console.log('Filter by judge:', judgeName)}
             >
               {judgeName}
             </button>
           </div>
           <div className="space-y-1">
-            <strong className="text-gray-500 font-medium block">Court</strong> 
+            <strong className="text-gray-500 font-medium block text-xs sm:text-sm">Court</strong> 
             <button 
-              className="font-semibold text-blue-600 hover:text-blue-800 text-sm sm:text-base hover:underline transition-colors"
+              className="font-semibold text-blue-600 hover:text-blue-800 text-xs sm:text-sm lg:text-base hover:underline transition-colors break-words text-left"
               onClick={() => console.log('Filter by court:', courtName)}
             >
               {courtName}
             </button>
           </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 text-sm mt-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 xl:gap-8 text-xs sm:text-sm mt-3 sm:mt-4">
           <div className="space-y-1">
-            <strong className="text-gray-500 font-medium block">Filing Date</strong> 
-            <span className="font-semibold text-gray-800 text-sm sm:text-base">{filingDate}</span>
+            <strong className="text-gray-500 font-medium block text-xs sm:text-sm">Filing Date</strong> 
+            <span className="font-semibold text-gray-800 text-xs sm:text-sm lg:text-base">{filingDate}</span>
           </div>
           <div className="space-y-1">
-            <strong className="text-gray-500 font-medium block">Case Number</strong> 
-            <span className="font-semibold text-gray-800 text-sm sm:text-base">{caseNumber}</span>
+            <strong className="text-gray-500 font-medium block text-xs sm:text-sm">Case Number</strong> 
+            <span className="font-semibold text-gray-800 text-xs sm:text-sm lg:text-base break-words">{caseNumber}</span>
           </div>
           <div className="space-y-1">
-            <strong className="text-gray-500 font-medium block">Case Type</strong> 
-            <span className="font-semibold text-gray-800 text-sm sm:text-base">{caseType}</span>
+            <strong className="text-gray-500 font-medium block text-xs sm:text-sm">Case Type</strong> 
+            <span className="font-semibold text-gray-800 text-xs sm:text-sm lg:text-base break-words">{caseType}</span>
           </div>
           <div className="space-y-1">
-            <strong className="text-gray-500 font-medium block">Jurisdiction</strong> 
-            <span className="font-semibold text-gray-800 text-sm sm:text-base">{jurisdiction}</span>
+            <strong className="text-gray-500 font-medium block text-xs sm:text-sm">Jurisdiction</strong> 
+            <span className="font-semibold text-gray-800 text-xs sm:text-sm lg:text-base break-words">{jurisdiction}</span>
           </div>
         </div>
         {/* Last Modified - Only show if valid date */}
         {lastModified && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 text-sm mt-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 xl:gap-8 text-xs sm:text-sm mt-3 sm:mt-4">
             <div className="space-y-1">
-              <strong className="text-gray-500 font-medium block">Last Modified</strong> 
-              <span className="font-semibold text-gray-800 text-sm sm:text-base">{lastModified}</span>
+              <strong className="text-gray-500 font-medium block text-xs sm:text-sm">Last Modified</strong> 
+              <span className="font-semibold text-gray-800 text-xs sm:text-sm lg:text-base">{lastModified}</span>
             </div>
           </div>
         )}

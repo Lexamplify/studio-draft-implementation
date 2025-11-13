@@ -83,8 +83,8 @@ function CaseDetailsForm({
   ];
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         {fields.map((field) => (
           <div key={field.key} className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
@@ -338,38 +338,38 @@ function CaseDashboard({ caseData: propCaseData }: CaseDashboardProps) {
   }
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto px-4">
+    <div className="space-y-4 sm:space-y-6 max-w-6xl mx-auto px-4 sm:px-6">
       {/* AI-Powered Case Summary */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
-        <div className="flex items-start justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-800 mb-2 flex items-center">
-              <Icon name="sparkles" className="w-5 h-5 text-blue-500 mr-2" />
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 sm:p-6 border border-blue-100">
+        <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2 flex items-center">
+              <Icon name="sparkles" className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 mr-2" />
               AI-Generated Case Summary
             </h2>
-            <p className="text-gray-700">
+            <p className="text-sm sm:text-base text-gray-700">
               {aiSummary || 'AI summary will be generated based on case documents...'}
             </p>
-            <p className="text-sm text-blue-600 mt-2">
+            <p className="text-xs sm:text-sm text-blue-600 mt-2">
               📊 Generated from 52 documents • 🕐 Last updated 2 hours ago
             </p>
           </div>
-          <button className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center">
+          <button className="text-blue-600 hover:text-blue-800 text-xs sm:text-sm font-medium flex items-center whitespace-nowrap">
             [+] Expand to read full AI summary
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Upcoming Deadlines */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <div className="p-5 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-              <Icon name="calendar" className="w-5 h-5 text-blue-500 mr-2" />
+          <div className="p-4 sm:p-5 border-b border-gray-200">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-800 flex items-center">
+              <Icon name="calendar" className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 mr-2" />
               Upcoming Deadlines
             </h3>
           </div>
-          <div className="p-5">
+          <div className="p-4 sm:p-5">
             {upcomingEvents.length > 0 ? (
               <ul className="space-y-4">
                 {upcomingEvents.slice(0, 3).map((event) => (
@@ -407,13 +407,13 @@ function CaseDashboard({ caseData: propCaseData }: CaseDashboardProps) {
 
         {/* Key Contacts */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <div className="p-5 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-              <Icon name="users" className="w-5 h-5 text-blue-500 mr-2" />
+          <div className="p-4 sm:p-5 border-b border-gray-200">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-800 flex items-center">
+              <Icon name="users" className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 mr-2" />
               Key Contacts
             </h3>
           </div>
-          <div className="p-5">
+          <div className="p-4 sm:p-5">
             <div className="space-y-4">
               <div>
                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Client</p>
@@ -436,13 +436,13 @@ function CaseDashboard({ caseData: propCaseData }: CaseDashboardProps) {
 
         {/* Quick Actions */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <div className="p-5 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-              <Icon name="zap" className="w-5 h-5 text-blue-500 mr-2" />
+          <div className="p-4 sm:p-5 border-b border-gray-200">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-800 flex items-center">
+              <Icon name="zap" className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 mr-2" />
               Quick Actions
             </h3>
           </div>
-          <div className="p-5">
+          <div className="p-4 sm:p-5">
             <div className="grid grid-cols-1 gap-3">
               {quickActions.map((action) => (
                 <button
@@ -469,14 +469,14 @@ function CaseDashboard({ caseData: propCaseData }: CaseDashboardProps) {
 
       {/* Case Analytics & Insights */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        <div className="p-5 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-            <Icon name="barChart" className="w-5 h-5 text-blue-500 mr-2" />
+        <div className="p-4 sm:p-5 border-b border-gray-200">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-800 flex items-center">
+            <Icon name="barChart" className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 mr-2" />
             Case Analytics & Insights
           </h3>
         </div>
-        <div className="p-5">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="p-4 sm:p-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {/* Document Count */}
             <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg">
               <div className="flex items-center justify-between">
@@ -553,9 +553,9 @@ function CaseDashboard({ caseData: propCaseData }: CaseDashboardProps) {
 
       {/* Case Details */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        <div className="p-5 border-b border-gray-200 flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-            <Icon name="fileText" className="w-5 h-5 text-blue-500 mr-2" />
+        <div className="p-4 sm:p-5 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-800 flex items-center">
+            <Icon name="fileText" className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 mr-2" />
             Case Details
           </h3>
           <button 
@@ -567,7 +567,7 @@ function CaseDashboard({ caseData: propCaseData }: CaseDashboardProps) {
           </button>
         </div>
         
-        <div className="p-5">
+        <div className="p-4 sm:p-5">
           {isEditing ? (
             <CaseDetailsForm 
               caseData={caseData} 
@@ -575,7 +575,7 @@ function CaseDashboard({ caseData: propCaseData }: CaseDashboardProps) {
               onSave={handleSaveCaseDetails}
             />
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               <DetailItem label="Case Number" value={caseData?.caseNumber} />
               <DetailItem label="Court" value={caseData?.courtName} />
               <DetailItem label="Judge" value={caseData?.judgeName} />

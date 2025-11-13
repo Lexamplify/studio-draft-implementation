@@ -206,30 +206,30 @@ export function CaseDocumentsView() {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex gap-6 p-6 overflow-hidden">
+      <div className="flex-1 flex flex-col lg:flex-row gap-4 sm:gap-6 p-4 sm:p-6 overflow-hidden">
         {/* Left Panel - User Documents */}
-        <div className="w-80 flex-shrink-0">
+        <div className="w-full lg:w-80 flex-shrink-0">
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm h-full flex flex-col">
-            <div className="p-5 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-                <Icon name="fileLines" className="w-5 h-5 text-blue-500 mr-2" />
+            <div className="p-4 sm:p-5 border-b border-gray-200">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-800 flex items-center">
+                <Icon name="fileLines" className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 mr-2" />
                 Your Documents
               </h3>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-xs sm:text-sm text-gray-500 mt-1">
                 {documents.length} document{documents.length !== 1 ? 's' : ''}
               </p>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex-1 overflow-y-auto p-3 sm:p-4">
               {isLoading ? (
                 <div className="flex items-center justify-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                 </div>
               ) : documents.length === 0 ? (
-                <div className="text-center py-12">
-                  <Icon name="fileLines" className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <h4 className="text-lg font-medium text-gray-500 mb-2">No documents yet</h4>
-                  <p className="text-gray-400 text-sm">Create a document from a template above</p>
+                <div className="text-center py-8 sm:py-12">
+                  <Icon name="fileLines" className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4" />
+                  <h4 className="text-base sm:text-lg font-medium text-gray-500 mb-2">No documents yet</h4>
+                  <p className="text-gray-400 text-xs sm:text-sm">Create a document from a template above</p>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -237,15 +237,15 @@ export function CaseDocumentsView() {
                     <div
                       key={doc.id}
                       onClick={() => handleDocumentClick(doc.id)}
-                      className="w-full text-left p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-gray-50 transition-all cursor-pointer"
+                      className="w-full text-left p-3 sm:p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-gray-50 transition-all cursor-pointer"
                     >
-                      <div className="flex items-start gap-3">
+                      <div className="flex items-start gap-2 sm:gap-3">
                         <Icon 
                           name="fileText" 
-                          className="w-5 h-5 mt-0.5 text-gray-400"
+                          className="w-4 h-4 sm:w-5 sm:h-5 mt-0.5 text-gray-400 flex-shrink-0"
                         />
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-medium text-gray-800 truncate">{doc.title}</h4>
+                          <h4 className="font-medium text-sm sm:text-base text-gray-800 truncate">{doc.title}</h4>
                           <p className="text-xs text-gray-500 mt-1">
                             Updated {formatDate(doc.updatedAt)}
                           </p>
@@ -260,7 +260,7 @@ export function CaseDocumentsView() {
         </div>
 
         {/* Right Panel - Placeholder */}
-        <div className="flex-1">
+        <div className="flex-1 hidden lg:block">
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm h-full flex flex-col">
             <div className="flex-1 flex items-center justify-center text-gray-500">
               <div className="text-center">
@@ -422,14 +422,14 @@ export function CaseDocumentsViewOLD() {
   const tags = ['all', 'draft', 'final', 'review', 'evidence', 'correspondence', 'legal', 'financial'];
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h3 className="text-2xl font-bold text-gray-800">Case Documents</h3>
-          <p className="text-gray-500 mt-1">Manage and organize your case files</p>
+          <h3 className="text-xl sm:text-2xl font-bold text-gray-800">Case Documents</h3>
+          <p className="text-sm sm:text-base text-gray-500 mt-1">Manage and organize your case files</p>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+          <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full text-center sm:text-left">
             {documents.length} document{documents.length !== 1 ? 's' : ''} uploaded
           </div>
           <button
@@ -438,7 +438,7 @@ export function CaseDocumentsViewOLD() {
               const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
               fileInput?.click();
             }}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-5 rounded-lg text-sm flex items-center gap-2 transition-all duration-200 shadow-sm hover:shadow-md"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-5 rounded-lg text-sm flex items-center justify-center gap-2 transition-all duration-200 shadow-sm hover:shadow-md w-full sm:w-auto"
           >
             <Icon name="upload" className="w-4 h-4" />
             Upload Files
@@ -447,21 +447,21 @@ export function CaseDocumentsViewOLD() {
       </div>
 
       {/* Search and Filter Bar */}
-      <div className="mb-6 bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+      <div className="mb-6 bg-white rounded-xl border border-gray-200 shadow-sm p-4 sm:p-6">
         {/* Search Bar */}
         <div className="relative mb-4">
-          <Icon name="search" className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Icon name="search" className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
           <input
             type="text"
             placeholder="Search documents by name, type, or content..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            className="w-full pl-9 sm:pl-10 pr-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
           />
         </div>
 
         {/* Filter Row */}
-        <div className="flex flex-wrap gap-4 items-center">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 items-stretch sm:items-center">
           {/* File Type Filter */}
           <div className="flex items-center space-x-2">
             <label className="text-sm font-medium text-gray-700 whitespace-nowrap">File Type:</label>
@@ -539,7 +539,7 @@ export function CaseDocumentsViewOLD() {
       )}
 
       {/* Documents List */}
-      <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+      <div className="bg-white p-4 sm:p-6 rounded-xl border border-gray-200 shadow-sm">
         {documents.length === 0 ? (
           <div className="text-center py-12">
             <Icon name="folder" className="w-16 h-16 text-gray-300 mx-auto mb-4" />
@@ -607,18 +607,18 @@ function DocumentItem({ icon, name, size, date, iconColor, onDelete, url }: {
 
   return (
     <li 
-      className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all duration-200 group"
+      className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 sm:p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all duration-200 group gap-3"
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
     >
-      <div className="flex items-center gap-4 flex-1 min-w-0">
-        <div className="relative">
-          <Icon name={icon} className={`w-10 h-10 ${iconColor}`} />
+      <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0 w-full sm:w-auto">
+        <div className="relative flex-shrink-0">
+          <Icon name={icon} className={`w-8 h-8 sm:w-10 sm:h-10 ${iconColor}`} />
           <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-gray-800 truncate">{name}</p>
-          <div className="flex items-center gap-2 text-xs text-gray-500">
+          <p className="font-semibold text-sm sm:text-base text-gray-800 truncate">{name}</p>
+          <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 mt-1">
             <span>{size}</span>
             <span>•</span>
             <span>Uploaded {date}</span>
@@ -629,8 +629,8 @@ function DocumentItem({ icon, name, size, date, iconColor, onDelete, url }: {
         </div>
       </div>
       
-      <div className={`flex items-center gap-1 transition-opacity duration-200 ${
-        showActions ? 'opacity-100' : 'opacity-0'
+      <div className={`flex items-center gap-1 transition-opacity duration-200 w-full sm:w-auto justify-end ${
+        showActions ? 'opacity-100' : 'opacity-0 sm:opacity-0'
       }`}>
         {url && (
           <>
@@ -700,17 +700,17 @@ export function CaseChatsView() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-bold text-gray-800">Linked Chats</h3>
+    <div className="max-w-4xl mx-auto px-4 sm:px-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <h3 className="text-lg sm:text-xl font-bold text-gray-800">Linked Chats</h3>
         <button 
           onClick={handleNewChat}
-          className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg text-sm flex items-center gap-2 transition-colors"
+          className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg text-sm flex items-center gap-2 transition-colors w-full sm:w-auto"
         >
           <Icon name="plus" className="w-4 h-4" /> New Chat
         </button>
       </div>
-      <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+      <div className="bg-white p-4 sm:p-6 rounded-xl border border-gray-200 shadow-sm">
         {chatsLoading ? (
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -725,22 +725,22 @@ export function CaseChatsView() {
           <div className="space-y-4">
             {linkedChats.map((chat) => (
               <div key={chat.id} className="bg-gray-50 p-4 rounded-lg hover:bg-gray-100 transition-colors">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h4 className="font-semibold text-gray-800">{chat.title || 'Untitled Chat'}</h4>
-                      <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded-full">
+                <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
+                      <h4 className="font-semibold text-sm sm:text-base text-gray-800 truncate">{chat.title || 'Untitled Chat'}</h4>
+                      <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded-full w-fit">
                         {chat.messageCount || 0} messages
                       </span>
                     </div>
-                    <p className="text-sm text-gray-600 mb-2">{chat.description || 'No description available'}</p>
+                    <p className="text-xs sm:text-sm text-gray-600 mb-2">{chat.description || 'No description available'}</p>
                     <p className="text-xs text-gray-500">
                       Last activity: {chat.lastMessage || 'Recently created'}
                     </p>
                   </div>
                   <button 
                     onClick={() => handleOpenChat(chat.id)}
-                    className="bg-white hover:bg-gray-200 border border-gray-300 text-gray-700 text-sm font-semibold py-2 px-4 rounded-lg transition-colors flex items-center gap-2"
+                    className="bg-white hover:bg-gray-200 border border-gray-300 text-gray-700 text-sm font-semibold py-2 px-4 rounded-lg transition-colors flex items-center gap-2 w-full sm:w-auto"
                   >
                     <Icon name="message" className="w-4 h-4" />
                     Open Chat
@@ -779,17 +779,17 @@ export function CaseDraftsView() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-bold text-gray-800">Linked Drafts</h3>
+    <div className="max-w-4xl mx-auto px-4 sm:px-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <h3 className="text-lg sm:text-xl font-bold text-gray-800">Linked Drafts</h3>
         <button 
           onClick={handleNewDraft}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg text-sm flex items-center gap-2 transition-colors"
+          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg text-sm flex items-center gap-2 transition-colors w-full sm:w-auto"
         >
           <Icon name="plus" className="w-4 h-4" /> New Draft
         </button>
       </div>
-      <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+      <div className="bg-white p-4 sm:p-6 rounded-xl border border-gray-200 shadow-sm">
         {drafts.length === 0 ? (
           <div className="text-center py-12">
             <Icon name="fileLines" className="w-16 h-16 text-gray-300 mx-auto mb-4" />
@@ -800,27 +800,27 @@ export function CaseDraftsView() {
           <div className="space-y-4">
             {drafts.map((draft) => (
               <div key={draft.id} className="bg-gray-50 p-4 rounded-lg hover:bg-gray-100 transition-colors">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h4 className="font-semibold text-gray-800">{draft.title}</h4>
-                      <span className={`text-xs font-semibold px-2 py-1 rounded-full ${getStatusColor(draft.status)}`}>
+                <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
+                      <h4 className="font-semibold text-sm sm:text-base text-gray-800 truncate">{draft.title}</h4>
+                      <span className={`text-xs font-semibold px-2 py-1 rounded-full w-fit ${getStatusColor(draft.status)}`}>
                         {draft.status}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-600 mb-2">{draft.description}</p>
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                    <p className="text-xs sm:text-sm text-gray-600 mb-2">{draft.description}</p>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs text-gray-500">
                       <span>Last modified: {draft.lastModified}</span>
                       <span>{draft.wordCount} words</span>
                     </div>
-            </div>
+                  </div>
                   <button 
                     onClick={() => handleOpenDraft(draft.id)}
-                    className="bg-white hover:bg-gray-200 border border-gray-300 text-gray-700 text-sm font-semibold py-2 px-4 rounded-lg transition-colors flex items-center gap-2"
+                    className="bg-white hover:bg-gray-200 border border-gray-300 text-gray-700 text-sm font-semibold py-2 px-4 rounded-lg transition-colors flex items-center gap-2 w-full sm:w-auto"
                   >
                     <Icon name="fileLines" className="w-4 h-4" />
-              Open Draft
-            </button>
+                    Open Draft
+                  </button>
                 </div>
               </div>
             ))}
@@ -945,16 +945,16 @@ export function CaseEventsView() {
   const sortedEvents = [...events].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h3 className="text-2xl font-bold text-gray-800">Events & Schedule</h3>
-          <p className="text-gray-500 mt-1">Manage hearings, deadlines, and important dates</p>
+          <h3 className="text-xl sm:text-2xl font-bold text-gray-800">Events & Schedule</h3>
+          <p className="text-sm sm:text-base text-gray-500 mt-1">Manage hearings, deadlines, and important dates</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 w-full sm:w-auto">
           <button 
             onClick={handleAddEvent}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-5 rounded-lg text-sm flex items-center gap-2 transition-all duration-200 shadow-sm hover:shadow-md"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-5 rounded-lg text-sm flex items-center gap-2 transition-all duration-200 shadow-sm hover:shadow-md w-full sm:w-auto justify-center"
           >
             <Icon name="calendarPlus" className="w-4 h-4" /> Add Event
           </button>
@@ -963,8 +963,8 @@ export function CaseEventsView() {
 
       {/* Add Event Form */}
       {isAddingEvent && (
-        <div className="mb-6 bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-          <h4 className="text-lg font-semibold text-gray-800 mb-4">Add New Event</h4>
+        <div className="mb-6 bg-white rounded-xl border border-gray-200 shadow-sm p-4 sm:p-6">
+          <h4 className="text-base sm:text-lg font-semibold text-gray-800 mb-4">Add New Event</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Event Title</label>
@@ -1071,18 +1071,18 @@ export function CaseEventsView() {
             {sortedEvents.map((event) => {
               const { day, month, year, weekday } = formatDate(event.date);
               return (
-                <div key={event.id} className={`p-6 hover:bg-gray-50 transition-colors border-l-4 ${getPriorityColor(event.priority)}`}>
-                  <div className="flex items-start gap-4">
-                    <div className="text-center w-20 bg-blue-50 p-3 rounded-lg border border-blue-200">
-                      <p className="text-2xl font-bold text-blue-600">{day}</p>
+                <div key={event.id} className={`p-4 sm:p-6 hover:bg-gray-50 transition-colors border-l-4 ${getPriorityColor(event.priority)}`}>
+                  <div className="flex flex-col sm:flex-row items-start gap-4">
+                    <div className="text-center w-16 sm:w-20 bg-blue-50 p-2 sm:p-3 rounded-lg border border-blue-200 flex-shrink-0">
+                      <p className="text-xl sm:text-2xl font-bold text-blue-600">{day}</p>
                       <p className="text-xs text-blue-500 uppercase font-semibold">{month}</p>
                       <p className="text-xs text-blue-400">{year}</p>
                     </div>
-                    <div className="flex-grow">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h4 className="font-semibold text-gray-800 text-lg">{event.title}</h4>
+                    <div className="flex-grow min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
+                            <h4 className="font-semibold text-base sm:text-lg text-gray-800 break-words">{event.title}</h4>
                             <span className={`text-xs font-semibold px-2 py-1 rounded-full border ${getEventTypeColor(event.type)}`}>
                               {event.type}
                             </span>
@@ -1094,8 +1094,8 @@ export function CaseEventsView() {
                               {event.priority.toUpperCase()} PRIORITY
                             </span>
                           </div>
-                          <p className="text-gray-600 mb-2">{event.description}</p>
-                          <div className="flex items-center gap-4 text-sm text-gray-500">
+                          <p className="text-sm sm:text-base text-gray-600 mb-2 break-words">{event.description}</p>
+                          <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm text-gray-500">
                             <div className="flex items-center gap-1">
                               <Icon name="clock" className="w-4 h-4" />
                               <span>{formatTime(event.time)}</span>
@@ -1103,7 +1103,7 @@ export function CaseEventsView() {
                             {event.location && (
                               <div className="flex items-center gap-1">
                                 <Icon name="mapPin" className="w-4 h-4" />
-                                <span>{event.location}</span>
+                                <span className="truncate max-w-[200px] sm:max-w-none">{event.location}</span>
                               </div>
                             )}
                             <div className="flex items-center gap-1">
@@ -1112,7 +1112,7 @@ export function CaseEventsView() {
                             </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-shrink-0">
                           <button 
                             onClick={() => setEditingEvent(event.id)}
                             className="p-2 rounded-full text-gray-400 hover:bg-blue-100 hover:text-blue-600 transition-colors" 
@@ -1223,17 +1223,17 @@ export function CaseOverview({ caseData, taskProgress }: { caseData?: any; taskP
   ];
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto px-4">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="space-y-4 sm:space-y-6 max-w-6xl mx-auto px-4 sm:px-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Upcoming Deadlines */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <div className="p-5 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-              <Icon name="calendar" className="w-5 h-5 text-blue-500 mr-2" />
+          <div className="p-4 sm:p-5 border-b border-gray-200">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-800 flex items-center">
+              <Icon name="calendar" className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 mr-2" />
               Upcoming Deadlines
             </h3>
           </div>
-          <div className="p-5">
+          <div className="p-4 sm:p-5">
             {upcomingEvents.length > 0 ? (
               <ul className="space-y-4">
                 {upcomingEvents.slice(0, 3).map((event) => (
@@ -1274,13 +1274,13 @@ export function CaseOverview({ caseData, taskProgress }: { caseData?: any; taskP
 
         {/* Key Contacts */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <div className="p-5 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-              <Icon name="users" className="w-5 h-5 text-blue-500 mr-2" />
+          <div className="p-4 sm:p-5 border-b border-gray-200">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-800 flex items-center">
+              <Icon name="users" className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 mr-2" />
               Key Contacts
             </h3>
           </div>
-          <div className="p-5">
+          <div className="p-4 sm:p-5">
             <div className="space-y-4">
               <div>
                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Client</p>
@@ -1303,13 +1303,13 @@ export function CaseOverview({ caseData, taskProgress }: { caseData?: any; taskP
 
         {/* Quick Actions */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <div className="p-5 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-              <Icon name="zap" className="w-5 h-5 text-blue-500 mr-2" />
+          <div className="p-4 sm:p-5 border-b border-gray-200">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-800 flex items-center">
+              <Icon name="zap" className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 mr-2" />
               Quick Actions
             </h3>
           </div>
-          <div className="p-5">
+          <div className="p-4 sm:p-5">
             <div className="grid grid-cols-1 gap-3">
               {quickActions.map((action) => (
                 <button
@@ -1336,14 +1336,14 @@ export function CaseOverview({ caseData, taskProgress }: { caseData?: any; taskP
 
       {/* Case Analytics & Insights */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        <div className="p-5 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-            <Icon name="barChart" className="w-5 h-5 text-blue-500 mr-2" />
+        <div className="p-4 sm:p-5 border-b border-gray-200">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-800 flex items-center">
+            <Icon name="barChart" className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 mr-2" />
             Case Analytics & Insights
           </h3>
         </div>
-        <div className="p-5">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="p-4 sm:p-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {/* Document Count */}
             <button 
               onClick={() => {
@@ -1513,11 +1513,11 @@ export function CaseDetails({ caseData }: { caseData?: any }) {
   ];
 
   return (
-    <div className="max-w-6xl mx-auto px-4">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6">
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        <div className="p-5 border-b border-gray-200 flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-            <Icon name="fileText" className="w-5 h-5 text-blue-500 mr-2" />
+        <div className="p-4 sm:p-5 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-800 flex items-center">
+            <Icon name="fileText" className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 mr-2" />
             Case Details
           </h3>
           <button 
@@ -1529,13 +1529,13 @@ export function CaseDetails({ caseData }: { caseData?: any }) {
           </button>
         </div>
         
-        <div className="p-5">
+        <div className="p-4 sm:p-5">
           {isEditing ? (
             <form onSubmit={(e) => {
               e.preventDefault();
               handleSaveCaseDetails(formData);
-            }} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            }} className="space-y-4 sm:space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 {fields.map((field) => (
                   <div key={field.key} className="space-y-2">
                     <label className="block text-sm font-medium text-gray-700">
@@ -1584,7 +1584,7 @@ export function CaseDetails({ caseData }: { caseData?: any }) {
               </div>
             </form>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {fields.map((field) => (
                 <div key={field.key} className="space-y-1">
                   <p className="text-sm font-medium text-gray-500">{field.label}</p>

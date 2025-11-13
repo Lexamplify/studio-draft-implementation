@@ -33,28 +33,31 @@ export default function SlidingNavBar({ activeTab, setActiveTab }: SlidingNavBar
   }, [activeTab]);
 
   return (
-    <div className="relative flex p-1 bg-gray-200/70 rounded-full w-full max-w-4xl mx-auto">
-      {navItems.map((item, index) => (
-        <button
-          key={item.id}
-          ref={el => { buttonRefs.current[index] = el; }}
-          onClick={() => setActiveTab(item.id)}
-          data-tab={item.id}
-          className="relative z-10 flex-1 px-4 py-2 rounded-full text-sm font-semibold transition-colors flex items-center justify-center gap-2"
-        >
-          <Icon 
-            name={item.icon} 
-            className={`w-4 h-4 transition-colors ${
-              activeTab === item.id ? 'text-white' : 'text-gray-500'
-            }`} 
-          />
-          <span className={`transition-colors ${
-            activeTab === item.id ? 'text-white' : 'text-gray-700'
-          }`}>
-            {item.title}
-          </span>
-        </button>
-      ))}
+    <div className="relative flex p-1 bg-gray-200/70 rounded-full w-full max-w-4xl mx-auto overflow-x-auto">
+      <div className="flex min-w-full">
+        {navItems.map((item, index) => (
+          <button
+            key={item.id}
+            ref={el => { buttonRefs.current[index] = el; }}
+            onClick={() => setActiveTab(item.id)}
+            data-tab={item.id}
+            className="relative z-10 flex-1 min-w-0 px-2 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-colors flex items-center justify-center gap-1 sm:gap-2 whitespace-nowrap"
+          >
+            <Icon 
+              name={item.icon} 
+              className={`w-3 h-3 sm:w-4 sm:h-4 transition-colors flex-shrink-0 ${
+                activeTab === item.id ? 'text-white' : 'text-gray-500'
+              }`} 
+            />
+            <span className={`transition-colors truncate ${
+              activeTab === item.id ? 'text-white' : 'text-gray-700'
+            }`}>
+              <span className="hidden sm:inline">{item.title}</span>
+              <span className="sm:hidden">{item.title.split(' ')[0]}</span>
+            </span>
+          </button>
+        ))}
+      </div>
       <span
         className="absolute top-1 bottom-1 left-0 bg-blue-600 shadow rounded-full transition-all duration-300 ease-in-out"
         style={sliderStyle}

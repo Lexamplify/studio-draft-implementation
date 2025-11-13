@@ -102,8 +102,8 @@ export default function CaseDetailView({ onTaskProgressUpdate }: CaseDetailViewP
       </div>
       
       {/* Content area */}
-      <div className="px-8 pb-8">
-        <div className="pt-6">
+      <div className="px-4 sm:px-6 lg:px-8 pb-6 sm:pb-8">
+        <div className="pt-4 sm:pt-6">
           {activeTab === 'overview' && <CaseOverview caseData={caseData} taskProgress={taskProgress} />}
           {activeTab === 'docs' && <CaseDocumentsView />}
           {activeTab === 'drafts' && <CaseDraftsView />}

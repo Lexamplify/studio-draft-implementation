@@ -41,14 +41,8 @@ interface MiddlePanelProps {
   onTaskProgressUpdate?: (completed: number, total: number) => void;
 }
 
-// Dynamic greeting phrases that highlight features (moved outside to prevent recreation)
-const phrases = [
-  "What cases are you working on today?",
-  "Need help drafting a legal document?",
-  "Looking for case research assistance?",
-  "Ready to manage your legal workflow?",
-  "How can AI amplify your legal practice?"
-];
+// Static greeting phrase
+const greetingPhrase = "How can AI amplify your legal practice?";
 
 export default function MiddlePanel({ chatId, setLoadingChatId, onTaskProgressUpdate }: MiddlePanelProps) {
   const { selectedCaseId, setSelectedCaseId, setActiveView, setSourceChatId, setSelectedChatId, setSelectedDraftId, activeView, chatFiles, addFileToChat } = useAppContext();
@@ -77,14 +71,21 @@ export default function MiddlePanel({ chatId, setLoadingChatId, onTaskProgressUp
   // Get files for current chat
   const currentChatFiles = chatId ? (chatFiles[chatId] || []) : [];
   
-  const [currentPhraseIndex, setCurrentPhraseIndex] = useState(0);
-  const [displayText, setDisplayText] = useState('');
-  const [isPhraseTyping, setIsPhraseTyping] = useState(true);
-  const phraseAnimationRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const phrasePauseRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isMobileOrTablet, setIsMobileOrTablet] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { executeSubmission, isProcessing, currentStep } = useSubmissionWorkflow();
+
+  // Detect mobile/tablet view
+  useEffect(() => {
+    const checkMobileOrTablet = () => {
+      setIsMobileOrTablet(window.innerWidth < 1024);
+    };
+    
+    checkMobileOrTablet();
+    window.addEventListener('resize', checkMobileOrTablet);
+    return () => window.removeEventListener('resize', checkMobileOrTablet);
+  }, []);
 
   const currentChat = chatId ? chats.find(chat => chat.id === chatId) : null;
   const currentCase = currentChat?.linkedCaseId ? 
@@ -96,69 +97,6 @@ export default function MiddlePanel({ chatId, setLoadingChatId, onTaskProgressUp
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Combined typing effect with phrase rotation (skip when in case detail view or library view)
-  useEffect(() => {
-    // Skip animation when not in chat view - important check before anything else
-    if (activeView === 'caseDetailView' || activeView === 'libraryView') {
-      // Clean up any running animations
-      if (phraseAnimationRef.current) {
-        clearInterval(phraseAnimationRef.current);
-        phraseAnimationRef.current = null;
-      }
-      if (phrasePauseRef.current) {
-        clearTimeout(phrasePauseRef.current);
-        phrasePauseRef.current = null;
-      }
-      return;
-    }
-    
-    // Clear any existing animation
-    if (phraseAnimationRef.current) {
-      clearInterval(phraseAnimationRef.current);
-    }
-    if (phrasePauseRef.current) {
-      clearTimeout(phrasePauseRef.current);
-    }
-    
-    const currentPhrase = phrases[currentPhraseIndex];
-    if (!currentPhrase) return;
-    
-    setDisplayText('');
-    setIsPhraseTyping(true);
-    
-    let currentIndex = 0;
-    
-    // Typing animation
-    const typingInterval = setInterval(() => {
-      if (currentIndex <= currentPhrase.length) {
-        setDisplayText(currentPhrase.substring(0, currentIndex));
-        currentIndex++;
-      } else {
-        setIsPhraseTyping(false);
-        clearInterval(typingInterval);
-        
-        // After typing completes, wait 3 seconds then move to next phrase
-        const pauseTimer = setTimeout(() => {
-          setCurrentPhraseIndex((prevIndex) => (prevIndex + 1) % phrases.length);
-        }, 3000);
-        
-        phrasePauseRef.current = pauseTimer;
-      }
-    }, 50); // Typing speed: 50ms per character
-    
-    phraseAnimationRef.current = typingInterval;
-    
-    return () => {
-      if (phraseAnimationRef.current) {
-        clearInterval(phraseAnimationRef.current);
-      }
-      if (phrasePauseRef.current) {
-        clearTimeout(phrasePauseRef.current);
-      }
-      phraseAnimationRef.current = null;
-      phrasePauseRef.current = null;
-    };
-  }, [currentPhraseIndex, activeView]);
 
   // Track loaded chat IDs to prevent duplicate loads
   const loadedChatIdsRef = useRef<Set<string>>(new Set());
@@ -717,44 +655,44 @@ export default function MiddlePanel({ chatId, setLoadingChatId, onTaskProgressUp
         {/* Header - Show chat name or case name */}
         {currentChat && (
           <div className="bg-white border-b border-gray-200 p-4 animate-in slide-in-from-top-4 fade-in duration-500">
-            <div className="flex items-center justify-between">
-              <div>
+            <div className="flex items-center justify-center gap-3 pr-12 lg:pr-0 w-full">
+              {/* Title and button on same line, centered */}
+              <div className="flex items-center gap-3 min-w-0 max-w-full">
                 {currentChat.linkedCaseId ? (
                   // Show case name when linked to a case
                   <>
-                    <h2 className="text-lg font-medium text-gray-900">
-                      {currentCase?.caseName || 'Case Chat'}
-                    </h2>
-                    <p className="text-sm text-gray-500">
-                      {currentChat.title || 'Untitled Chat'}
-                    </p>
+                    <div className="text-center min-w-0 max-w-[calc(100%-120px)] flex-shrink">
+                      <h2 className="text-lg font-medium text-gray-900 truncate" title={currentCase?.caseName || 'Case Chat'}>
+                        {currentCase?.caseName || 'Case Chat'}
+                      </h2>
+                      <p className="text-sm text-gray-500 truncate" title={currentChat.title || 'Untitled Chat'}>
+                        {currentChat.title || 'Untitled Chat'}
+                      </p>
+                    </div>
+                    <Button
+                      onClick={handleViewCase}
+                      variant="outline"
+                      size="sm"
+                      className="font-medium flex-shrink-0"
+                    >
+                      View Case
+                    </Button>
                   </>
                 ) : (
                   // Show chat name when not linked to a case
-                  <h2 className="text-lg font-medium text-gray-900">
-                    {currentChat.title || 'Untitled Chat'}
-                  </h2>
-                )}
-              </div>
-              <div className="flex items-center space-x-2">
-                {currentChat.linkedCaseId ? (
-                  <Button
-                    onClick={handleViewCase}
-                    variant="outline"
-                    size="sm"
-                    className="font-medium"
-                  >
-                    View Case
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={() => setIsLinkModalOpen(true)}
-                    variant="outline"
-                    size="sm"
-                    className="font-medium"
-                  >
-                    Link to Case
-                  </Button>
+                  <>
+                    <h2 className="text-lg font-medium text-gray-900 truncate max-w-[calc(100%-120px)]" title={currentChat.title || 'Untitled Chat'}>
+                      {currentChat.title || 'Untitled Chat'}
+                    </h2>
+                    <Button
+                      onClick={() => setIsLinkModalOpen(true)}
+                      variant="outline"
+                      size="sm"
+                      className="font-medium flex-shrink-0"
+                    >
+                      Link to Case
+                    </Button>
+                  </>
                 )}
               </div>
             </div>
@@ -764,16 +702,8 @@ export default function MiddlePanel({ chatId, setLoadingChatId, onTaskProgressUp
         {/* Fresh Chat Interface - Centered like ChatGPT */}
         <div className="flex-1 flex items-center justify-center p-8">
           <div className="text-center max-w-4xl w-full">
-            <h1 className="text-4xl font-medium text-gray-900 mb-12 inline-flex items-center justify-center">
-              <span>{displayText}</span>
-              {isPhraseTyping && (
-                <span 
-                  className="inline-block w-0.5 h-12 bg-primary ml-2"
-                  style={{
-                    animation: 'blink 1s infinite'
-                  }}
-                />
-              )}
+            <h1 className="text-4xl font-medium text-gray-900 mb-12">
+              {greetingPhrase}
             </h1>
             
             {/* Input Bar - ChatGPT style */}
@@ -827,44 +757,44 @@ export default function MiddlePanel({ chatId, setLoadingChatId, onTaskProgressUp
       {/* Header - Show chat name or case name */}
       {currentChat && (
         <div className="bg-white border-b border-gray-200 p-4 animate-in slide-in-from-top-4 fade-in duration-500">
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex items-center justify-center gap-3 pr-12 lg:pr-0 w-full">
+            {/* Title and button on same line, centered */}
+            <div className="flex items-center gap-3 min-w-0 max-w-full">
               {currentChat.linkedCaseId ? (
                 // Show case name when linked to a case
                 <>
-                  <h2 className="text-lg font-medium text-gray-900">
-                    {currentCase?.caseName || 'Case Chat'}
-                  </h2>
-                  <p className="text-sm text-gray-500">
-                    {currentChat.title || 'Untitled Chat'}
-                  </p>
+                  <div className="text-center min-w-0 max-w-[calc(100%-120px)] flex-shrink">
+                    <h2 className="text-lg font-medium text-gray-900 truncate" title={currentCase?.caseName || 'Case Chat'}>
+                      {currentCase?.caseName || 'Case Chat'}
+                    </h2>
+                    <p className="text-sm text-gray-500 truncate" title={currentChat.title || 'Untitled Chat'}>
+                      {currentChat.title || 'Untitled Chat'}
+                    </p>
+                  </div>
+                  <Button
+                    onClick={handleViewCase}
+                    variant="outline"
+                    size="sm"
+                    className="font-medium flex-shrink-0"
+                  >
+                    View Case
+                  </Button>
                 </>
               ) : (
                 // Show chat name when not linked to a case
-                <h2 className="text-lg font-medium text-gray-900">
-                  {currentChat.title || 'Untitled Chat'}
-                </h2>
-              )}
-            </div>
-            <div className="flex items-center space-x-2">
-              {currentChat.linkedCaseId ? (
-                <Button
-                  onClick={handleViewCase}
-                  variant="outline"
-                  size="sm"
-                  className="font-medium"
-                >
-                  View Case
-                </Button>
-              ) : (
-                <Button
-                  onClick={() => setIsLinkModalOpen(true)}
-                  variant="outline"
-                  size="sm"
-                  className="font-medium"
-                >
-                  Link to Case
-                </Button>
+                <>
+                  <h2 className="text-lg font-medium text-gray-900 truncate max-w-[calc(100%-120px)]" title={currentChat.title || 'Untitled Chat'}>
+                    {currentChat.title || 'Untitled Chat'}
+                  </h2>
+                  <Button
+                    onClick={() => setIsLinkModalOpen(true)}
+                    variant="outline"
+                    size="sm"
+                    className="font-medium flex-shrink-0"
+                  >
+                    Link to Case
+                  </Button>
+                </>
               )}
             </div>
           </div>
