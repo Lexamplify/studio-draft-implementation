@@ -389,17 +389,16 @@ REMINDER: Your response MUST start with {"type": "doc", "content": [ and end wit
       }
     }
 
-    // If all models failed, fall back to existing AI service
-    console.error('❌ All Gemini models failed, falling back to existing AI service...');
+    // If all models failed, fall back to chat API
+    console.warn('⚠️ All Gemini models failed, falling back to chat API...');
     try {
-      console.log('🔄 Falling back to existing AI service...');
+      console.log('🔄 Falling back to chat API...');
       return await this.fallbackToTextProcessing(prompt);
     } catch (fallbackError) {
       console.error('❌ Fallback also failed:', fallbackError);
+      // Return error response instead of throwing
+      return this.createErrorResponse();
     }
-    
-    // Final fallback to error response
-    return this.createErrorResponse();
   }
 
   /**
@@ -718,7 +717,7 @@ REMINDER: Your response MUST start with {"type": "doc", "content": [ and end wit
   }
 
   /**
-   * Fallback to text processing using existing AI service
+   * Fallback to text processing using chat API
    */
   private static async fallbackToTextProcessing(prompt: string, generatedText?: string): Promise<any> {
     try {
@@ -740,9 +739,26 @@ REMINDER: Your response MUST start with {"type": "doc", "content": [ and end wit
         // Use the generated text from Gemini if available
         processedText = generatedText;
       } else {
-        // Use the existing AI service for rephrasing
-        const { AIService } = await import('./ai-service');
-        processedText = await AIService.rephraseText(originalText);
+        // Try to use chat API as fallback
+        try {
+          const { apiClient } = await import('./api-client');
+          const commandMatch = prompt.match(/User Command: (.+?)\n/);
+          const userCommand = commandMatch ? commandMatch[1] : 'Improve and refine this text';
+          
+          const response = await apiClient.post('/api/chat', {
+            message: `${userCommand}: ${originalText}`,
+            context: {
+              documentId: 'fallback',
+            },
+            document: originalText,
+          });
+
+          processedText = response.response || response.answer || originalText;
+        } catch (chatError) {
+          console.error('❌ Chat API fallback also failed:', chatError);
+          // If chat API also fails, return original text wrapped in JSON structure
+          processedText = originalText;
+        }
       }
       
       // Convert the processed text back to the original JSON structure
